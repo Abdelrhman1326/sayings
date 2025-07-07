@@ -7,7 +7,12 @@ export default {
         jsMath: ['jsMath-cmbx10', 'serif'],
         ibm: ['"IBM Plex Sans"', 'sans-serif'],
         kalnia: ['Kalnia', 'serif'],
+        roboto: ['Roboto', 'sans-serif'],
+        bebas: ['"Bebas Neue"', 'cursive'],
       },
+      colors: {
+        uiPrimary: '#D2BCFF'
+      }
     },
   },
   plugins: [],
