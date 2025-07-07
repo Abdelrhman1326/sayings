@@ -1,4 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans&family=Kalnia&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* jsMath local font */
+@font-face {
+  font-family: 'jsMath-cmbx10';
+  src: url('/fonts/jsMath-cmbx10.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  background-color: #141414;
+}
