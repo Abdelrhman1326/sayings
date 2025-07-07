@@ -12,25 +12,25 @@ const Login = () => {
   }
 
   return (
-    <div className="flex h-screen bg-[#141414] pl-10 pr-10">
+    <div className="flex h-screen bg-[#141414] pl-20 pr-20">
       {/* Left side with image and overlaid logo - Made wider */}
       <div className="w-1/2 flex items-center relative">
         {/* Image */}
         <img
           src={SideImage}
           alt="Login background"
-          className="max-h-[92%] min-w-[80%] rounded-[40px] object-cover"
+          className="max-h-[92%] min-w-[90%] rounded-[40px] object-cover"
         />
         {/* Logo over the image */}
         <div className="absolute top-20 left-16 z-10">
-          <Logo color="white" size={48} />
-          <p className='text-white text-[20px] opacity-70 font-ibm font-bold'>Happy to see you again</p>
+          <Logo color="white" size={54} />
+          <p className='text-white text-[24px] opacity-70 font-ibm font-bold'>Happy to see you again</p>
         </div>
       </div>
 
-      <div className="flex flex-col w-1/2 pt-48 pb-20 text-white pr-24">
+      <div className="flex flex-col w-1/2 pt-48 pb-20 text-white">
         <div className='text-center'>
-          <h1 className='font-jsMath text-[60px] font-bold cursor-default'>Welcome Back</h1>
+          <h1 className='font-jsMath text-[60px] font-bold cursor-default mt-8'>Welcome Back</h1>
           <h2 className='text-[20px] opacity-70 font-ibm font-bold cursor-default'>Welcome back to sayings - Let's continue</h2>
         </div>
         
