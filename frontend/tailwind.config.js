@@ -11,7 +11,8 @@ export default {
         bebas: ['"Bebas Neue"', 'cursive'],
       },
       colors: {
-        uiPrimary: '#D2BCFF'
+        uiPrimary: '#D2BCFF',
+        bgColor: '#141414',
       }
     },
   },
