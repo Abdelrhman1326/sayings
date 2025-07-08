@@ -12,7 +12,7 @@ const Header = () => {
         <p className="cursor-pointer">Saved</p>
       </nav>
       <div className="pr-32 absolute right-4">
-        <Button text="Sign in" className="font-kalnia font-bold rounded-full w-[125px] h-[45px]
+        <Button text="Sign in" className="font-jsMath font-bold rounded-full w-[125px] h-[45px]
         border-solid border-white border-4 text-[22px] flex items-center justify-center" />
       </div>
     </div>
