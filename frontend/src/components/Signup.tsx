@@ -23,7 +23,7 @@ const Signup = () => {
         <img
           src={SideImage}
           alt=""
-          className="max-h-[92%] min-w-[90%] rounded-[40px] object-cover"
+          className="max-h-[92%] min-w-[92%] rounded-[40px] object-cover"
         />
         {/* Logo over the image */}
         <div className="absolute top-24 left-16 z-10">

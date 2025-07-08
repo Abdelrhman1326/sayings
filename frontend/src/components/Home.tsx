@@ -1,9 +1,11 @@
 import Header from "./Header"
+import HomeBody from "./subComponents/HomeBody";
 
 const Home = () => {
   return (
-    <div className="text-white">
+    <div>
       <Header />
+      <HomeBody />
     </div>
   )
 }
