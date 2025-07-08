@@ -6,7 +6,7 @@ interface LogoProps {
 const Logo = ({ color = 'white', size = '24px' }: LogoProps) => {
   return (
     <h1
-      className="font-jsMath font-bold"
+      className="font-jsMath font-bold cursor-default"
       style={{ color, fontSize: typeof size === 'number' ? `${size}px` : size }}
     >
       sayings

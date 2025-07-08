@@ -4,12 +4,16 @@ import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from './ui/Button';
 
+import { useNavigate } from 'react-router-dom';
+
 const Login = () => {
   const [hidePassword, setHidePassword] = useState(true);
   
   const handleHidePassword = () => {
     setHidePassword(!hidePassword);
   }
+
+  const navigate = useNavigate();
 
   return (
     <div className="flex h-screen bg-[#141414] pl-20 pr-20">
@@ -18,7 +22,7 @@ const Login = () => {
         {/* Image */}
         <img
           src={SideImage}
-          alt="Login background"
+          alt=""
           className="max-h-[92%] min-w-[90%] rounded-[40px] object-cover"
         />
         {/* Logo over the image */}
@@ -56,8 +60,8 @@ const Login = () => {
             </div>
           </div>
           
-          <Button className='mt-8 w-[420px] h-[60px] text-[24px] rounded-xl' text='Log in to your account' />
-          <p className="font-ibm font-bold text-[16px] mt-2 cursor-default"><span className="opacity-70">New Here?</span> <span className="hover:underline">Create an account</span></p>
+          <Button className='mt-8 w-[420px] h-[60px] text-[22px] rounded-xl' text='Log in to your account' />
+          <p className="text-[16px] mt-2 cursor-default"><span className="opacity-70">New Here?</span> <span className="hover:underline cursor-pointer" onClick={() => navigate("/signup")}>Create an account</span></p>
         </form>
       </div>
     </div>
