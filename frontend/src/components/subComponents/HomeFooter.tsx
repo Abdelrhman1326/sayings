@@ -45,7 +45,7 @@ const HomeFooter = () => {
 
     gsap.fromTo(
       el,
-      { x: 0 },
+      { x: 150 },
       {
         x: -width / 2,
         duration: 100,
