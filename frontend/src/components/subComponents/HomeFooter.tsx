@@ -62,7 +62,7 @@ const HomeFooter = () => {
 
       {words.length > 0 && (
         <div
-          className="absolute bottom-0 left-0 flex gap-20 text-[40px] opacity-30 whitespace-nowrap mb-6"
+          className="absolute bottom-0 left-0 flex gap-20 text-[40px] opacity-30 whitespace-nowrap mb-8"
           ref={marqueeInnerRef}
         >
           {words.map((word, i) => (

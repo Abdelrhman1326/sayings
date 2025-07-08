@@ -8,6 +8,7 @@ import QuoteOfTheDay from './components/QuoteOfTheDay';
 import Browse from './components/Browse';
 import Search from './components/Search';
 import Saved from './components/Saved';
+import LuckyQuote from './components/LuckyQuote';
 
 function App() {
   return (
@@ -15,10 +16,11 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/home" element={<Home />} />
-      <Route path="quoteoftheday" element={<QuoteOfTheDay />} />
-      <Route path="browse" element={<Browse />} />
-      <Route path="search" element={<Search />} />
-      <Route path="saved" element={<Saved />} />
+      <Route path="/quote-of-the-day" element={<QuoteOfTheDay />} />
+      <Route path="/browse" element={<Browse />} />
+      <Route path="/search" element={<Search />} />
+      <Route path="/saved" element={<Saved />} />
+      <Route path="/lucky-quote" element={<LuckyQuote />} />
     </Routes>
   );
 }

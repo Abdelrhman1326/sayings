@@ -1,7 +1,11 @@
 import Button from "../ui/Button";
 import illustration from "../../assets/homepage_illustration.svg";
+import { useNavigate } from "react-router-dom";
 
 const HomeBody = () => {
+
+  const navigate = useNavigate();
+
   return (
     <div className="pl-32 pr-32 pt-12 cursor-default flex flex-row">
       <div className="mt-10">
@@ -19,6 +23,7 @@ const HomeBody = () => {
           <Button
             text={"Get A Quote"}
             className="font-jsMath font-bold text-[30px] rounded-full border-solid border-white border-4"
+            onClick={() => navigate('/lucky-quote')}
           />
         </div>
       </div>
