@@ -1,7 +1,9 @@
+import Header from "./Header";
+
 const Saved = () => {
   return (
-    <div className="text-white">
-      Saved
+    <div>
+      <Header />
     </div>
   )
 }

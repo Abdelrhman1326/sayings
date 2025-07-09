@@ -1,7 +1,9 @@
+import Header from "./Header";
+
 const QuoteOfTheDay = () => {
   return (
-    <div className="text-white">
-      Quote of the day
+    <div>
+      <Header />
     </div>
   )
 }
