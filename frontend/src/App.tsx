@@ -14,11 +14,13 @@ import Browse from './components/Browse';
 import Search from './components/Search';
 import Saved from './components/Saved';
 import LuckyQuote from './components/LuckyQuote';
+import NotFound from './components/NotFound';
 
 function App() {
   return (
     <>
       <Routes>
+        <Route path="*" element={<NotFound />} />
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<AntiProtectedRoute><Login /></AntiProtectedRoute>} />
         <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />
