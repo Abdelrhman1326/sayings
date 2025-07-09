@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/utils/ProtectedRoute';
 import AntiProtectedRoute from './components/utils/AntiProtectedRoute';
 
@@ -19,6 +19,7 @@ function App() {
   return (
     <>
       <Routes>
+        <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<AntiProtectedRoute><Login /></AntiProtectedRoute>} />
         <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />
         <Route path="/home" element={<Home />} />

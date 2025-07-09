@@ -22,7 +22,7 @@ export const login = async (loginData: any) => {
     return response.data;
 
   } catch (error: any) {
-    // ✅ Extract meaningful error message from Django
+    // Extract meaningful error message from Django
     if (axios.isAxiosError(error)) {
       const data = error.response?.data;
 

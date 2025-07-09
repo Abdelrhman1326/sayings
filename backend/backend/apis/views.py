@@ -5,6 +5,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.contrib.auth import login
+from django.contrib.auth import logout
 from .serializers import SignupSerializer, LoginSerializer
 from .models import User
 
@@ -51,3 +52,8 @@ class AuthView(APIView):
                 }
             })
         return JsonResponse({'authenticated': False})
+    
+class LogoutView(APIView):
+    def post(self, request):
+        logout(request)
+        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)

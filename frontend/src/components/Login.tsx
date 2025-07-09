@@ -1,10 +1,9 @@
 import SideImage from '../assets/login-signup-pages-image.jpg';
 import Logo from './ui/Logo';
-import { useState, useEffect, useReducer } from 'react';
+import { useState, useReducer } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from './ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { getAuth } from '../apis/auth';
 import { login } from '../apis/loginApi'
 import { toast } from 'react-toastify';
 
@@ -38,6 +37,7 @@ const Login = () => {
     try {
       await login(formState);
       toast.success('Login successful');
+      navigate('/home');
     } catch (err: any) {
       toast.error(err.message || 'Login failed');
     }
