@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import authenticate
 from .models import User
 
 
@@ -79,3 +80,32 @@ class SignupSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password')
         validated_data['password'] = make_password(validated_data['password'])
         return User.objects.create(**validated_data)
+    
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(
+        required=True,
+        error_messages={
+            'required': 'Username field is required',
+            'blank': 'Username field may not be blank',
+        }
+    )
+    password = serializers.CharField(
+        write_only = True,
+        required = True,
+        error_messages={
+            'required': 'Password field is required',
+            'blank': 'Password field may not be blank',
+        }
+    )
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        user = authenticate(username=username, password=password)
+        if not user:
+            raise serializers.ValidationError({'detail': 'Invalid username or password'})
+        
+        attrs['user'] = user
+        return attrs

@@ -1,5 +1,7 @@
 import './App.css'
 import { Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/utils/ProtectedRoute';
+import AntiProtectedRoute from './components/utils/AntiProtectedRoute';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -17,14 +19,14 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<AntiProtectedRoute><Login /></AntiProtectedRoute>} />
+        <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />
         <Route path="/home" element={<Home />} />
-        <Route path="/quote-of-the-day" element={<QuoteOfTheDay />} />
-        <Route path="/browse" element={<Browse />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/saved" element={<Saved />} />
-        <Route path="/lucky-quote" element={<LuckyQuote />} />
+        <Route path="/quote-of-the-day" element={<ProtectedRoute><QuoteOfTheDay /></ProtectedRoute>} />
+        <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />
+        <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+        <Route path="/saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
+        <Route path="/lucky-quote" element={<ProtectedRoute><LuckyQuote /></ProtectedRoute>} />
       </Routes>
       <ToastContainer position="top-right" theme='dark' autoClose={3000} />
     </>
