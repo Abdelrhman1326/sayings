@@ -4,7 +4,7 @@ import HomeFooter from "./subComponents/HomeFooter";
 
 const Home = () => {
   return (
-    <div>
+    <div className="overflow-x-hidden">
       <Header />
       <HomeBody />
       <HomeFooter />
