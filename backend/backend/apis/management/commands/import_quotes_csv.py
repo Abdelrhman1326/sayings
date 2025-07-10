@@ -18,11 +18,17 @@ class Command(BaseCommand):
             with open(file_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
+                    # Extract author and source from 'author' field
+                    author_field = row.get('author') or row.get('Author') or ''
+                    parts = [p.strip() for p in author_field.split(',', 1)]
+                    quote_author = parts[0]
+                    quote_source = parts[1] if len(parts) > 1 else ''
+
                     quotes.append(Quote(
                         quote_text=row.get('quote') or row.get('Quote') or '',
-                        quote_author=row.get('author') or row.get('Author') or '',
-                        quote_genre=row.get('genre') or '',
-                        quote_source='CSV Source'
+                        quote_author=quote_author,
+                        quote_genre=row.get('category') or '',
+                        quote_source=quote_source
                     ))
 
                     if len(quotes) >= batch_size:

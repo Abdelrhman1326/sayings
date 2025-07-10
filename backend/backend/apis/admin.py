@@ -11,6 +11,5 @@ from .models import Quote
 
 @admin.register(Quote)
 class QuoteAdmin(admin.ModelAdmin):
-    list_display = ('quote_text', 'quote_author', 'quote_genre', 'quote_source')
-    search_fields = ('quote_text', 'quote_author', 'quote_genre', 'quote_source')
-
+    list_display = ('quote_text', 'quote_author', 'quote_source')
+    search_fields = ('quote_text', 'quote_author', 'quote_source')
