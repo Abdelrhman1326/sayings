@@ -1,5 +1,6 @@
 import './App.css'
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/utils/ProtectedRoute';
 import AntiProtectedRoute from './components/utils/AntiProtectedRoute';
 
@@ -16,12 +17,29 @@ import Saved from './components/Saved';
 import LuckyQuote from './components/LuckyQuote';
 import NotFound from './components/NotFound';
 
+import { getAuth } from './apis/auth';
+
 function App() {
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    getAuth().then((data) => {
+      setIsAuthenticated(data.authenticated);
+      setIsLoading(false);
+    });
+  }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
   return (
     <>
       <Routes>
         <Route path="*" element={<NotFound />} />
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/browse" replace /> : <Navigate to="/home" replace />} />
         <Route path="/login" element={<AntiProtectedRoute><Login /></AntiProtectedRoute>} />
         <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />
         <Route path="/home" element={<Home />} />
