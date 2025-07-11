@@ -8,7 +8,7 @@ class User(AbstractUser):
     password = models.CharField(max_length=128)  # Store hashed password only!
 
 class Quote(models.Model):
-    quote_text = models.TextField()
+    quote_text = models.TextField(unique=True) # This enforces uniqueness at the DB level
     quote_genre = models.CharField(max_length=100, blank=True, null=True)
     quote_author = models.CharField(max_length=100, blank=True, null=True)
     quote_source = models.CharField(max_length=100, blank=True, null=True)
