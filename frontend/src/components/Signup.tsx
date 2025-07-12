@@ -3,7 +3,7 @@ import { useReducer } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import Button from './ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { signup } from '../apis/signupApi'; // ✅ use signup instead of login
+import { signup } from '../apis/signupApi';
 import { toast } from 'react-toastify';
 import PasswordStrengthChecker from './ui/PasswordStrengthChecker';
 
@@ -71,7 +71,7 @@ const Signup = () => {
       </div>
 
       <div className="bg-black border h-[780px] border-white border-opacity-20 rounded-2xl p-8 w-full max-w-2xl text-white">
-        <h1 className="flex flex-col justify-center items-center font-jsMath mt-4 text-[38px]">
+        <h1 className="flex flex-col justify-center items-center font-jsMath mt-4 text-[40px]">
           <p>Sign up for your</p>
           <p>Sayings account</p>
         </h1>

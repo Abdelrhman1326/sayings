@@ -48,10 +48,7 @@ export default function PasswordStrengthChecker({
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto mb-2">
-      <label htmlFor={id} className="text-white text-sm font-medium block mb-2">
-        Password
-      </label>
+    <div className="w-full max-w-sm mx-auto">
       <div className="relative">
         <input
           id={id}

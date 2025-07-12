@@ -57,7 +57,7 @@ const Login = () => {
 
         {/* Login box */}
         <div className="bg-black border h-[500px] border-white border-opacity-20 rounded-2xl p-8 w-full max-w-2xl text-white">
-            <h1 className="flex flex-col justify-center items-center font-jsMath mt-4 text-[38px]">
+            <h1 className="flex flex-col justify-center items-center font-jsMath mt-4 text-[40px]">
             <p>Log in to your</p>
             <p>Sayings account</p>
             </h1>
