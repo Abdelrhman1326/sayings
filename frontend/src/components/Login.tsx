@@ -4,7 +4,7 @@ import { useState, useReducer } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from './ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../apis/loginApi'
+import { login } from '../apis/loginApi';
 import { toast } from 'react-toastify';
 
 const initialState = {
@@ -28,9 +28,7 @@ const Login = () => {
   const [formState, dispatch] = useReducer(reducer, initialState);
   const navigate = useNavigate();
 
-  const handleHidePassword = () => {
-    setHidePassword(!hidePassword);
-  };
+  const handleHidePassword = () => setHidePassword(prev => !prev);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +43,7 @@ const Login = () => {
 
   return (
     <div className="flex h-screen bg-[#141414] pl-20 pr-20">
-      {/* Left side with image and overlaid logo - Made wider */}
+      {/* Left side with image and overlaid logo */}
       <div className="w-1/2 flex items-center relative">
         <img
           src={SideImage}
@@ -53,7 +51,7 @@ const Login = () => {
           className="max-h-[92%] min-w-[92%] rounded-[40px] object-cover"
         />
         <div className="absolute top-24 left-16 z-10">
-          <Logo color="white" size={54} />
+          <Logo size={54} />
           <p className="text-white text-[24px] opacity-70 font-ibm font-bold">Happy to see you again</p>
         </div>
       </div>
@@ -61,10 +59,15 @@ const Login = () => {
       <div className="flex flex-col w-1/2 pt-48 pb-20 text-white">
         <div className="text-center">
           <h1 className="font-jsMath text-[60px] font-bold cursor-default mt-8">Welcome Back</h1>
-          <h2 className="text-[20px] opacity-70 font-ibm font-bold cursor-default">Welcome back to sayings - Let's continue</h2>
+          <h2 className="text-[20px] opacity-70 font-ibm font-bold cursor-default">
+            Welcome back to sayings - Let's continue
+          </h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col w-full h-full items-center font-ibm font-bold">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col w-full h-full items-center font-ibm font-bold"
+        >
           <div className="flex flex-col mt-10">
             <label className="text-[16px] opacity-70">Your username</label>
             <input
@@ -103,7 +106,10 @@ const Login = () => {
 
           <p className="text-[16px] mt-2 cursor-default">
             <span className="opacity-70">New Here?</span>{' '}
-            <span className="hover:underline cursor-pointer" onClick={() => navigate("/signup")}>
+            <span
+              className="hover:underline cursor-pointer"
+              onClick={() => navigate('/signup')}
+            >
               Create an account
             </span>
           </p>

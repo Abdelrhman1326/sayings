@@ -1,6 +1,6 @@
 import Logo from './ui/Logo';
 import { useState, useReducer } from 'react';
-import { Eye, EyeClosed } from 'lucide-react';
+import { Eye, EyeClosed, ArrowLeft } from 'lucide-react';
 import Button from './ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../apis/loginApi';
@@ -42,6 +42,20 @@ const Login_ver2 = () => {
 
   return (
     <div className="flex items-center justify-center w-screen h-screen bg-[#141414]">
+      {/* Logo in the top-left corner */}
+      <div className="absolute left-32 top-8">
+        <Logo size={44} />
+      </div>
+      <div className='flex items-center'>
+        <div className="absolute top-8 bg-black border-solid border-[1px] border-white border-opacity-30  rounded-lg p-2 pt-2.5 pb-2.5 pr-4 mt-2 right-32 flex items-center gap-2 cursor-pointer group" onClick={() => navigate(-1)}>
+            <ArrowLeft className="text-white group-hover:stroke-uiPrimary transition duration-200" size={28} />
+            <span className="text-white text-xl group-hover:text-uiPrimary transition duration-200">
+                Back
+            </span>
+        </div>
+      </div>
+
+      {/* Login box */}
       <div className="bg-black border h-[500px] border-white border-opacity-20 rounded-2xl p-8 w-full max-w-2xl text-white">
         <h1 className="flex flex-col justify-center items-center font-jsMath mt-4 text-[38px]">
           <p>Log in to your</p>
@@ -49,7 +63,7 @@ const Login_ver2 = () => {
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col items-center mt-8">
-          {/* Username */}
+          {/* Username input */}
           <div className="flex justify-center h-12 w-full mb-6">
             <input
               className="bg-black text-[18px] border border-white border-opacity-30 text-white px-4 py-2 rounded-lg w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
@@ -59,11 +73,11 @@ const Login_ver2 = () => {
             />
           </div>
 
-          {/* Password */}
+          {/* Password input with toggle */}
           <div className="flex justify-center h-12 w-full mb-6 relative">
             <input
               type={hidePassword ? 'password' : 'text'}
-              className="bg-black text-[18px] border border-white border-opacity-30 text-white px-4 py-2 pr-[calc(12%-20px)] rounded-lg w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
+              className="bg-black text-[18px] border border-white border-opacity-30 text-white px-4 py-2 pr-10 rounded-lg w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
               placeholder="Password"
               value={formState.password}
               onChange={(e) => dispatch({ type: 'SET_PASSWORD', payload: e.target.value })}
@@ -72,12 +86,13 @@ const Login_ver2 = () => {
               type="button"
               onClick={handleHidePassword}
               className="absolute right-[calc(50%-170px)] top-1/2 -translate-y-1/2 text-white opacity-70 hover:opacity-100"
+              aria-label={hidePassword ? "Show password" : "Hide password"}
             >
               {hidePassword ? <EyeClosed size={24} /> : <Eye size={24} />}
             </button>
           </div>
 
-          {/* Button */}
+          {/* Submit button */}
           <div className="flex justify-center h-12 w-full">
             <Button
               type="submit"
