@@ -56,7 +56,7 @@ export default function PasswordStrengthChecker({
           placeholder="Password"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-black border border-white border-opacity-30 text-white pl-4 pr-12 py-2 rounded-md w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
+          className="bg-black border text-lg border-white border-opacity-30 text-white pl-4 pr-12 py-2 rounded-md w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
         />
         <button
           className="text-white opacity-70 hover:opacity-100 absolute inset-y-0 right-4 flex items-center justify-center "
