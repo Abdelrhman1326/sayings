@@ -18,6 +18,7 @@ import LuckyQuote from './components/LuckyQuote';
 import NotFound from './components/NotFound';
 
 import { getAuth } from './apis/auth';
+import Login_ver2 from './components/Login_ver2';
 
 function App() {
 
@@ -42,6 +43,7 @@ function App() {
         <Route path="*" element={<NotFound />} /> 
         <Route path="/" element={isAuthenticated ? <Navigate to="/browse" replace /> : <Navigate to="/home" replace />} />
         <Route path="/login" element={<AntiProtectedRoute><Login /></AntiProtectedRoute>} />
+        <Route path="/login_ver2" element={<Login_ver2 />} />
         <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />
         <Route path="/home" element={<Home />} />
         <Route path="/quote-of-the-day" element={<ProtectedRoute><QuoteOfTheDay /></ProtectedRoute>} />
