@@ -3,7 +3,7 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
-from .models import User
+from .models import User, Quote
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -109,3 +109,9 @@ class LoginSerializer(serializers.Serializer):
         
         attrs['user'] = user
         return attrs
+
+
+class RandomQuoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Quote
+        fields = ['id', 'quote_text', 'quote_author', 'quote_genre', 'quote_source']

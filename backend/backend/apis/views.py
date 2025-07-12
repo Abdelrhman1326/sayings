@@ -6,8 +6,10 @@ from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.contrib.auth import login
 from django.contrib.auth import logout
-from .serializers import SignupSerializer, LoginSerializer
-from .models import User
+from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer
+from .models import User, Quote
+
+# Auth views:
 
 class SignupView(APIView):
     queryset = User.objects.all()
@@ -57,3 +59,17 @@ class LogoutView(APIView):
     def post(self, request):
         logout(request)
         return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+    
+# Quotes:
+
+import random
+from django.db.models.functions import Random
+
+class RandomQuoteView(APIView):
+    def get(self, request):
+        quote = Quote.objects.order_by(Random()).first()  # One random row only
+        if not quote:
+            return Response({"error": "No quotes available"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = RandomQuoteSerializer(quote)
+        return Response(serializer.data, status=status.HTTP_200_OK)
