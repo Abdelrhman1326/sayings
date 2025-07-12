@@ -62,7 +62,7 @@ export default function PasswordStrengthChecker({
           className="bg-black border border-white border-opacity-30 text-white pl-4 pr-12 py-2 rounded-md w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
         />
         <button
-          className="text-white absolute inset-y-0 right-4 flex items-center justify-center"
+          className="text-white opacity-70 hover:opacity-100 absolute inset-y-0 right-4 flex items-center justify-center "
           type="button"
           onClick={toggleVisibility}
         >
