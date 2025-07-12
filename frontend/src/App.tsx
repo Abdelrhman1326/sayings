@@ -25,20 +25,21 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    getAuth().then((data) => {
-      setIsAuthenticated(data.authenticated);
+    (async() => {
+      setIsAuthenticated((await getAuth()).authenticated)
       setIsLoading(false);
-    });
+    })();
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div className='flex justify-center items-center h-screen
+     text-uiPrimary font-kalnia text-4xl'>Loading...</div>
   }
 
   return (
     <>
       <Routes>
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} /> 
         <Route path="/" element={isAuthenticated ? <Navigate to="/browse" replace /> : <Navigate to="/home" replace />} />
         <Route path="/login" element={<AntiProtectedRoute><Login /></AntiProtectedRoute>} />
         <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />

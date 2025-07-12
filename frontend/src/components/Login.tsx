@@ -68,7 +68,7 @@ const Login = () => {
           <div className="flex flex-col mt-10">
             <label className="text-[16px] opacity-70">Your username</label>
             <input
-              className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px]"
+              className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] focus:border-uiPrimary focus:outline-none focus:border-4"
               placeholder="username"
               value={formState.username}
               onChange={e => dispatch({ type: 'SET_USERNAME', payload: e.target.value })}
@@ -79,7 +79,7 @@ const Login = () => {
             <label className="text-[16px] opacity-70">Your password</label>
             <div className="relative">
               <input
-                className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] pr-11"
+                className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] pr-11 focus:border-uiPrimary focus:outline-none focus:border-4"
                 placeholder="password"
                 type={hidePassword ? 'password' : 'text'}
                 value={formState.password}
@@ -97,7 +97,7 @@ const Login = () => {
 
           <Button
             type="submit"
-            className="mt-8 w-[420px] h-[60px] text-[22px] rounded-xl"
+            className="mt-8 pt-3 w-[420px] h-[60px] font-bebas font-medium text-[24px] rounded-xl"
             text="Log in to your account"
           />
 

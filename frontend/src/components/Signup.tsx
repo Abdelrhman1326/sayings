@@ -98,7 +98,7 @@ const Signup = () => {
           <div className="flex flex-col mt-10">
             <label className="text-[16px] opacity-70">Your email</label>
             <input
-              className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px]"
+              className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] focus:border-uiPrimary focus:outline-none focus:border-4"
               placeholder="email"
               value={formData.email}
               onChange={(e) =>
@@ -111,7 +111,7 @@ const Signup = () => {
           <div className="flex flex-col mt-5">
             <label className="text-[16px] opacity-70">Create new username</label>
             <input
-              className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px]"
+              className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] focus:border-uiPrimary focus:outline-none focus:border-4"
               placeholder="username"
               value={formData.userName}
               onChange={(e) =>
@@ -125,7 +125,7 @@ const Signup = () => {
             <label className="text-[16px] opacity-70">Create new password</label>
             <div className="relative">
               <input
-                className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] pr-11"
+                className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] pr-11 focus:border-uiPrimary focus:outline-none focus:border-4"
                 placeholder="password"
                 type={hidePassword ? 'password' : 'text'}
                 value={formData.password}
@@ -148,7 +148,7 @@ const Signup = () => {
             <label className="text-[16px] opacity-70">Confirm your password</label>
             <div className="relative">
               <input
-                className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] pr-4"
+                className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] pr-4 focus:border-uiPrimary focus:outline-none focus:border-4"
                 placeholder="Confirm password"
                 type="password"
                 value={formData.confirmPassword}
@@ -163,7 +163,7 @@ const Signup = () => {
           </div>
 
           <Button
-            className="mt-8 w-[420px] h-[60px] text-[22px] rounded-xl"
+            className="mt-8 pt-3 w-[420px] h-[60px] font-bebas font-medium text-[24px] rounded-xl"
             text="Create new account"
             type="submit"
           />
