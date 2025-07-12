@@ -1,180 +1,135 @@
-import SideImage from '../assets/login-signup-pages-image.jpg';
 import Logo from './ui/Logo';
-import { useState, useReducer } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { useReducer } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import Button from './ui/Button';
 import { useNavigate } from 'react-router-dom';
-import { signup } from '../apis/signupApi';
-
+import { signup } from '../apis/signupApi'; // ✅ use signup instead of login
 import { toast } from 'react-toastify';
+import PasswordStrengthChecker from './ui/PasswordStrengthChecker';
+
+function reducer(formData: any, action: any) {
+  switch (action.type) {
+    case 'SET_EMAIL':
+      return { ...formData, email: action.payload };
+    case 'SET_USERNAME':
+      return { ...formData, username: action.payload };
+    case 'SET_PASSWORD':
+      return { ...formData, password: action.payload };
+    case 'SET_CONFIRMPASSWORD':
+      return { ...formData, confirmPassword: action.payload };
+    default:
+      return formData;
+  }
+}
 
 const Signup = () => {
-  const [hidePassword, setHidePassword] = useState(true);
-  const navigate = useNavigate();
-
-  const handleHidePassword = () => {
-    setHidePassword(!hidePassword);
-  };
-
-  function reducer(formData: any, action: any) {
-    switch (action.type) {
-      case 'modify_email':
-        return { ...formData, email: action.payload };
-      case 'modify_username':
-        return { ...formData, userName: action.payload };
-      case 'modify_password':
-        return { ...formData, password: action.payload };
-      case 'modify_confirmpassword':
-        return { ...formData, confirmPassword: action.payload };
-      default:
-        return formData;
-    }
-  }
-
   const [formData, dispatch] = useReducer(reducer, {
     email: '',
-    userName: '',
+    username: '',
     password: '',
     confirmPassword: '',
   });
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error('Passwords do not match');
       return;
     }
 
     try {
-      const response = await signup({
+      await signup({
+        username: formData.username,
         email: formData.email,
-        username: formData.userName,
         password: formData.password,
         confirm_password: formData.confirmPassword,
       });
-
-      console.log("Signup success:", response);
-      toast.success("Account created successfully!");
-      navigate("/login");
+      toast.success('Signup successful');
+      navigate('/login');
     } catch (err: any) {
-      if (err.message) {
-        toast.error(err.message);
-      } else {
-        toast.error("Signup failed");
-      }
+      toast.error(err.message || 'Signup failed');
     }
   };
 
   return (
-    <div className="flex h-screen bg-[#141414] pl-20 pr-20">
-      {/* Left image side */}
-      <div className="w-1/2 flex items-center relative">
-        <img
-          src={SideImage}
-          alt=""
-          className="max-h-[92%] min-w-[92%] rounded-[40px] object-cover"
-        />
-        <div className="absolute top-24 left-16 z-10">
-          <Logo color="white" size={54} />
-          <p className="text-white text-[24px] opacity-70 font-ibm font-bold">It’s never too late</p>
+    <div className="flex items-center justify-center w-screen h-screen bg-[#141414] mt-8">
+      <div className="absolute left-32 top-8">
+        <Logo size={44} />
+      </div>
+
+      <div className="absolute top-8 right-32">
+        <div
+          onClick={() => navigate(-1)}
+          className="bg-black border border-white border-opacity-30 rounded-lg p-2 pt-2.5 pb-2.5 pr-4 flex items-center gap-2 cursor-pointer group"
+        >
+          <ArrowLeft className="text-white group-hover:stroke-uiPrimary transition duration-200" size={28} />
+          <span className="text-white text-xl group-hover:text-uiPrimary transition duration-200">Back</span>
         </div>
       </div>
 
-      {/* Right form side */}
-      <div className="flex flex-col w-1/2 pt-36 pb-20 text-white">
-        <div className="text-center">
-          <h1 className="font-jsMath text-[60px] font-bold cursor-default">Get Started</h1>
-          <h2 className="text-[20px] opacity-70 font-ibm font-bold cursor-default">
-            Welcome to sayings - Let’s get started
-          </h2>
-        </div>
+      <div className="bg-black border h-[780px] border-white border-opacity-20 rounded-2xl p-8 w-full max-w-2xl text-white">
+        <h1 className="flex flex-col justify-center items-center font-jsMath mt-4 text-[38px]">
+          <p>Sign up for your</p>
+          <p>Sayings account</p>
+        </h1>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col w-full h-full items-center font-ibm font-bold"
-        >
-          {/* Email */}
-          <div className="flex flex-col mt-10">
-            <label className="text-[16px] opacity-70">Your email</label>
+        <form onSubmit={handleSubmit} className="flex flex-col items-center mt-8">
+          {/* Username input */}
+          <div className="flex justify-center h-12 w-full mb-6">
             <input
-              className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] focus:border-uiPrimary focus:outline-none focus:border-4"
-              placeholder="email"
+              className="bg-black text-[18px] border border-white border-opacity-30 text-white px-4 py-2 rounded-lg w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
+              placeholder="Username"
+              value={formData.username}
+              onChange={(e) => dispatch({ type: 'SET_USERNAME', payload: e.target.value })}
+            />
+          </div>
+
+          {/* Email input */}
+          <div className="flex justify-center h-12 w-full mb-6">
+            <input
+              type="email"
+              className="bg-black text-[18px] border border-white border-opacity-30 text-white px-4 py-2 rounded-lg w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
+              placeholder="Email"
               value={formData.email}
-              onChange={(e) =>
-                dispatch({ type: 'modify_email', payload: e.target.value })
-              }
+              onChange={(e) => dispatch({ type: 'SET_EMAIL', payload: e.target.value })}
             />
           </div>
 
-          {/* Username */}
-          <div className="flex flex-col mt-5">
-            <label className="text-[16px] opacity-70">Create new username</label>
-            <input
-              className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] focus:border-uiPrimary focus:outline-none focus:border-4"
-              placeholder="username"
-              value={formData.userName}
-              onChange={(e) =>
-                dispatch({ type: 'modify_username', payload: e.target.value })
-              }
+          {/* Password Strength Component */}
+          <div className="w-full max-w-sm mb-6">
+            <PasswordStrengthChecker
+              value={formData.password}
+              onChange={(val) => dispatch({ type: 'SET_PASSWORD', payload: val })}
             />
-          </div>
-
-          {/* Password */}
-          <div className="flex flex-col mt-5">
-            <label className="text-[16px] opacity-70">Create new password</label>
-            <div className="relative">
-              <input
-                className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] pr-11 focus:border-uiPrimary focus:outline-none focus:border-4"
-                placeholder="password"
-                type={hidePassword ? 'password' : 'text'}
-                value={formData.password}
-                onChange={(e) =>
-                  dispatch({ type: 'modify_password', payload: e.target.value })
-                }
-              />
-              <button
-                type="button"
-                onClick={handleHidePassword}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white opacity-70 hover:opacity-100"
-              >
-                {hidePassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
           </div>
 
           {/* Confirm Password */}
-          <div className="flex flex-col mt-5">
-            <label className="text-[16px] opacity-70">Confirm your password</label>
-            <div className="relative">
-              <input
-                className="h-[54px] w-[420px] rounded-xl bg-transparent border-solid border-2 pl-4 text-[18px] pr-4 focus:border-uiPrimary focus:outline-none focus:border-4"
-                placeholder="Confirm password"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) =>
-                  dispatch({
-                    type: 'modify_confirmpassword',
-                    payload: e.target.value,
-                  })
-                }
-              />
-            </div>
+          <div className="flex justify-center h-12 w-full mb-6">
+            <input
+              type="password"
+              className="bg-black text-[18px] border border-white border-opacity-30 text-white px-4 py-2 rounded-lg w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-uiPrimary"
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={(e) => dispatch({ type: 'SET_CONFIRMPASSWORD', payload: e.target.value })}
+            />
           </div>
 
-          <Button
-            className="mt-8 pt-3 w-[420px] h-[60px] font-bebas font-medium text-[24px] rounded-xl"
-            text="Create new account"
-            type="submit"
-          />
+          {/* Submit button */}
+          <div className="flex justify-center h-12 w-full">
+            <Button
+              type="submit"
+              text="Sign Up"
+              className="rounded-lg w-full max-w-sm h-full font-bebas text-[26px]"
+            />
+          </div>
 
-          <p className="text-[16px] mt-2 cursor-default">
-            <span className="opacity-70">Already have account?</span>{' '}
-            <span
-              className="hover:underline cursor-pointer"
-              onClick={() => navigate('/login')}
-            >
-              Login
+          <p className="text-[18px] mt-4 cursor-default">
+            <span className="opacity-70">Already have an account?</span>{' '}
+            <span className="hover:underline cursor-pointer" onClick={() => navigate('/login')}>
+              Log in
             </span>
           </p>
         </form>

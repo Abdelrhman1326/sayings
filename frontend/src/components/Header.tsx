@@ -51,6 +51,7 @@ const Header = () => {
               navigate('/login');
             } else {
               try {
+                navigate('/home');
                 await logout();
                 setIsAuthenticated(false);
                 toast.success("Logout successful")
