@@ -1,12 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.contrib.auth import login
 from django.contrib.auth import logout
-from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer
+from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer
 from .models import User, Quote
 
 # Auth views:
@@ -73,3 +74,20 @@ class RandomQuoteView(APIView):
 
         serializer = RandomQuoteSerializer(quote)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DeleteQuoteView(GenericAPIView):
+    serializer_class = DeleteQuoteSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        quote_id = serializer.validated_data['id']
+        quote = Quote.objects.filter(id=quote_id).first()
+        if not quote:
+            return Response({"error": "Quote not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        quote.delete()
+        return Response({"success": f"Quote with id {quote_id} deleted."}, status=status.HTTP_200_OK)

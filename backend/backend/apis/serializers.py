@@ -5,6 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 from .models import User, Quote
 
+# Auth:
 
 class SignupSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
@@ -111,7 +112,13 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 
+# Quotes:
+
 class RandomQuoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quote
         fields = ['id', 'quote_text', 'quote_author', 'quote_genre', 'quote_source']
+
+
+class DeleteQuoteSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
