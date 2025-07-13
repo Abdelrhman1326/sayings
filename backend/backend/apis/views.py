@@ -77,10 +77,11 @@ class RandomQuoteView(APIView):
 
 
 class DeleteQuoteView(GenericAPIView):
+    queryset = Quote.objects.all()
     serializer_class = DeleteQuoteSerializer
-
+    
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+        serializer = DeleteQuoteSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
