@@ -55,7 +55,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="flex items-center justify-center w-screen h-screen bg-[#141414] mt-8">
+    <div className="flex items-center justify-center w-screen h-screen bg-[#141414] mt-8 overflow-x-hidden">
       <div className="absolute left-32 top-8">
         <Logo size={44} />
       </div>
