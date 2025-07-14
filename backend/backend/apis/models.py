@@ -15,3 +15,11 @@ class Quote(models.Model):
 
     def __str__(self):
         return self.quote_text
+
+class CommunityQuote(models.Model):
+    quote_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_quotes')
+    quote_text = models.TextField()
+    quote_genre = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.quote_text

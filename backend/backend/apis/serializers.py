@@ -3,7 +3,7 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
-from .models import User, Quote
+from .models import User, Quote, CommunityQuote
 
 # Auth:
 
@@ -119,6 +119,13 @@ class RandomQuoteSerializer(serializers.ModelSerializer):
         model = Quote
         fields = ['id', 'quote_text', 'quote_author', 'quote_genre', 'quote_source']
 
-
 class DeleteQuoteSerializer(serializers.Serializer):
     id = serializers.IntegerField()
+
+
+# Community Quotes:
+
+class CommunityQuoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommunityQuote
+        fields = ['id', 'quote_owner', 'quote_text', 'quote_genre']

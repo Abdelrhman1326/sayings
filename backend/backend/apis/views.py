@@ -2,13 +2,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
+from rest_framework import mixins
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-from django.http import JsonResponse
-from django.contrib.auth import login
 from django.contrib.auth import logout
-from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer
-from .models import User, Quote
+from django.contrib.auth import login
+from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer
+from django.http import JsonResponse
+from .models import User, Quote, CommunityQuote
 
 # Auth views:
 
@@ -79,8 +82,12 @@ class RandomQuoteView(APIView):
 class DeleteQuoteView(GenericAPIView):
     queryset = Quote.objects.all()
     serializer_class = DeleteQuoteSerializer
+    permission_classes = [IsAuthenticated]
     
     def post(self, request):
+        if not request.user.is_staff:
+            return Response({"error": "Only admins can delete non-community quotes."}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = DeleteQuoteSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -92,3 +99,54 @@ class DeleteQuoteView(GenericAPIView):
 
         quote.delete()
         return Response({"success": f"Quote with id {quote_id} deleted."}, status=status.HTTP_200_OK)
+    
+
+# Community Quotes:
+
+class CommunityQuoteCreateView(mixins.CreateModelMixin,
+                                generics.GenericAPIView):
+    queryset = CommunityQuote.objects.all()
+    serializer_class = CommunityQuoteSerializer
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({"error": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+        return self.create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(quote_owner=self.request.user)
+
+
+class CommunityQuoteDetailView(mixins.RetrieveModelMixin,
+                                mixins.UpdateModelMixin,
+                                mixins.DestroyModelMixin,
+                                generics.GenericAPIView):
+    queryset = CommunityQuote.objects.all()
+    serializer_class = CommunityQuoteSerializer
+
+    def custom_auth(self, request):
+        if not request.user.is_authenticated:
+            return Response({"error": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        instance = self.get_object()
+
+        if instance.quote_owner.id != request.user.id:
+            return Response({"error": "You are not allowed to modify this quote."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        return None
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        auth_response = self.custom_auth(request)
+        if auth_response:
+            return auth_response
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        auth_response = self.custom_auth(request)
+        if auth_response:
+            return auth_response
+        return self.destroy(request, *args, **kwargs)
