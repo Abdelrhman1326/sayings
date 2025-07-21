@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SignupView, LoginView, AuthView, LogoutView, RandomQuoteView, DeleteQuoteView, CommunityQuoteCreateView, CommunityQuoteDetailView
+from .views import SignupView, LoginView, AuthView, LogoutView, RandomQuoteView, DeleteQuoteView, CommunityQuoteCreateView, CommunityQuoteDetailView, UserEngagementView
 
 urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
@@ -11,5 +11,7 @@ urlpatterns = [
     path('delete_quote/', DeleteQuoteView.as_view(), name='delete_quote'),
 
     path('community-quotes/', CommunityQuoteCreateView.as_view(), name='community-quote-create'),
-    path('community-quotes/<int:pk>/', CommunityQuoteDetailView.as_view(), name='community-quote-detail')
+    path('community-quotes/<int:pk>/', CommunityQuoteDetailView.as_view(), name='community-quote-detail'),
+
+    path('user-engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
 ]

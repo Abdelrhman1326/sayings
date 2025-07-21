@@ -9,9 +9,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.contrib.auth import logout
 from django.contrib.auth import login
-from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer
+from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
 from django.http import JsonResponse
-from .models import User, Quote, CommunityQuote
+from .models import User, Quote, CommunityQuote, UserEngagement
+from django.shortcuts import get_object_or_404
 
 # Auth views:
 
@@ -148,3 +149,36 @@ class CommunityQuoteDetailView(mixins.RetrieveModelMixin,
         if auth_response:
             return auth_response
         return self.destroy(request, *args, **kwargs)
+    
+
+class UserEngagementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        if not request.user.is_superuser:
+            return Response({"error": "Access denied"}, status=403)
+
+        user = get_object_or_404(User, id=user_id)
+        engagement = get_object_or_404(UserEngagement, user=user)
+        serializer = UserEngagementSerializer(engagement)
+        return Response(serializer.data)
+
+    def post(self, request, user_id):
+        if not (request.user.is_superuser or request.user.id == user_id):
+            return Response({"error": "Access denied."}, status=403)
+
+        user = get_object_or_404(User, id=user_id)
+        engagement, created = UserEngagement.objects.get_or_create(user=user)
+
+        genres = request.data.get('genres', [])
+        if not isinstance(genres, list):
+            return Response({"error": "Genres must be a list."}, status=400)
+
+        existing_genres = engagement.favorite_genres or []
+        engagement.favorite_genres = list(set(existing_genres + genres))
+        engagement.save()
+
+        return Response({
+            "message": f"Genres updated for user {user.username}.",
+            "favorite_genres": engagement.favorite_genres
+        }, status=200)

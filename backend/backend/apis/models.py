@@ -23,3 +23,7 @@ class CommunityQuote(models.Model):
 
     def __str__(self):
         return self.quote_text
+    
+class UserEngagement(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_engagement')
+    favorite_genres = models.JSONField(default=list, blank=True)

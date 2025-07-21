@@ -3,7 +3,7 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
-from .models import User, Quote, CommunityQuote
+from .models import User, Quote, CommunityQuote, UserEngagement
 
 # Auth:
 
@@ -83,6 +83,8 @@ class SignupSerializer(serializers.ModelSerializer):
         return User.objects.create(**validated_data)
     
 
+# users:
+
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(
         required=True,
@@ -110,6 +112,12 @@ class LoginSerializer(serializers.Serializer):
         
         attrs['user'] = user
         return attrs
+    
+
+class UserEngagementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserEngagement
+        fields = ['favorite_genres']
 
 
 # Quotes:
