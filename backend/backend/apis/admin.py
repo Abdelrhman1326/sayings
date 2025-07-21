@@ -7,9 +7,13 @@ class UserAdmin(BaseUserAdmin):
     pass
 
 from django.contrib import admin
-from .models import Quote
+from .models import Quote, CommunityQuote
 
 @admin.register(Quote)
 class QuoteAdmin(admin.ModelAdmin):
     list_display = ('quote_text', 'quote_author', 'quote_source')
     search_fields = ('quote_text', 'quote_author', 'quote_source')
+
+@admin.register(CommunityQuote)
+class CommunityQuoteAdmin(admin.ModelAdmin):
+    list_display = ['quote_owner', 'quote_text', 'quote_genre']

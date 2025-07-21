@@ -65,7 +65,6 @@ class LogoutView(APIView):
         return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
     
 # Quotes:
-
 import random
 from django.db.models.functions import Random
 
@@ -102,7 +101,6 @@ class DeleteQuoteView(GenericAPIView):
     
 
 # Community Quotes:
-
 class CommunityQuoteCreateView(mixins.CreateModelMixin,
                                 generics.GenericAPIView):
     queryset = CommunityQuote.objects.all()
