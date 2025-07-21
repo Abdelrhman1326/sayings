@@ -47,7 +47,8 @@ const Login = () => {
             <Logo size={44} />
         </div>
         <div className='flex items-center'>
-            <div className="absolute top-8 bg-black border-solid border-[1px] border-white border-opacity-30  rounded-lg p-2 pt-2.5 pb-2.5 pr-4 mt-2 right-32 flex items-center gap-2 cursor-pointer group" onClick={() => navigate(-1)}>
+            <div className="absolute top-8 bg-black border-solid border-[1px] border-white border-opacity-30  rounded-lg p-2 pt-2.5 pb-2.5 pr-4 mt-2 right-32 flex items-center gap-2 cursor-pointer group" 
+            onClick={() => navigate('/home')}>
                 <ArrowLeft className="text-white group-hover:stroke-uiPrimary transition duration-200" size={28} />
                 <span className="text-white text-xl group-hover:text-uiPrimary transition duration-200">
                     Back

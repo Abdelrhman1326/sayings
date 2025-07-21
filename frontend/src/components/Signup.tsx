@@ -62,7 +62,7 @@ const Signup = () => {
 
       <div className="absolute top-8 right-32">
         <div
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/login')}
           className="bg-black border border-white border-opacity-30 rounded-lg p-2 pt-2.5 pb-2.5 pr-4 flex items-center gap-2 cursor-pointer group"
         >
           <ArrowLeft className="text-white group-hover:stroke-uiPrimary transition duration-200" size={28} />
