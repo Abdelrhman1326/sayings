@@ -36,6 +36,8 @@ ALLOWED_HOSTS = [
 INSTALLED_APPS = [
     'apis',
     'rest_framework',
+    'drf_spectacular',
+    'drf_spectacular_sidecar',  # 👈 Required for Redoc/Swagger UI templates to work
     'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -61,7 +63,14 @@ CORS_ALLOW_CREDENTIALS = True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Sayings API',
+    'DESCRIPTION': 'A Django REST API for managing quotes and community interactions.',
+    'VERSION': '1.0.0',
 }
 
 CORS_ALLOWED_ORIGINS = [
