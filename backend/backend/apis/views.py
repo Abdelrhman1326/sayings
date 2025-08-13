@@ -83,6 +83,7 @@ class RandomQuoteView(APIView):
 
 
 class SearchQuotesView(GenericAPIView):
+    permission_classes=[IsAuthenticated]
     def get(self, request):
         q = request.GET.get('q')
         if not q:
