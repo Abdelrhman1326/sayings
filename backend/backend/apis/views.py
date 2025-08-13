@@ -1,21 +1,20 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import generics
-from rest_framework import mixins
+from rest_framework import generics, mixins, status
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-from django.contrib.auth import logout
-from django.contrib.auth import login
-from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
+from django.contrib.auth import login, logout
 from django.http import JsonResponse
-from .models import User, Quote, CommunityQuote, UserEngagement
 from django.shortcuts import get_object_or_404
+# serializers:
+from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
+# models:
+from .models import User, Quote, CommunityQuote, UserEngagement
 
 # Auth views:
-
+###
 class SignupView(APIView):
     queryset = User.objects.all()
     serializer_class = SignupSerializer
@@ -63,9 +62,12 @@ class AuthView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         logout(request)
-        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
-    
+        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)    
+
+###
+
 # Quotes:
+###
 import random
 from django.db.models.functions import Random
 
@@ -99,7 +101,8 @@ class DeleteQuoteView(GenericAPIView):
 
         quote.delete()
         return Response({"success": f"Quote with id {quote_id} deleted."}, status=status.HTTP_200_OK)
-    
+
+###
 
 # Community Quotes:
 class CommunityQuoteCreateView(mixins.CreateModelMixin,
@@ -150,7 +153,8 @@ class CommunityQuoteDetailView(mixins.RetrieveModelMixin,
             return auth_response
         return self.destroy(request, *args, **kwargs)
     
-
+# Algorithm views
+###
 class UserEngagementView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -182,3 +186,5 @@ class UserEngagementView(APIView):
             "message": f"Genres updated for user {user.username}.",
             "favorite_genres": engagement.favorite_genres
         }, status=200)
+    
+###

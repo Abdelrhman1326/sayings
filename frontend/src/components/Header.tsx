@@ -34,7 +34,7 @@ const Header = () => {
   return (
     <div className="flex place-items-center gap-24 w-screen pl-32 pr-32 pt-8">
       <Logo size={44} />
-      <nav className="flex font-ibm font-bold gap-20 mt-1 text-[18px]">
+      <nav className="flex font-ibm font-bold gap-16 mt-1 text-[16px]">
         <p onClick={() => navigate('/home')} className={getNavItemStyle("home")}>Home</p>
         <p onClick={() => navigate('/quote-of-the-day')} className={getNavItemStyle("quote-of-the-day")}>Quote of the day</p>
         <p onClick={() => navigate('/browse')} className={getNavItemStyle("browse")}>Browse</p>
