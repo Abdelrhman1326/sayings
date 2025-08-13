@@ -1,17 +1,19 @@
 from django.urls import path
-from .views import SignupView, LoginView, AuthView, LogoutView, RandomQuoteView, DeleteQuoteView, CommunityQuoteCreateView, CommunityQuoteDetailView, UserEngagementView
+from .views import SignupView, LoginView, AuthView, LogoutView
+from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView, CommunityQuoteDetailView
+from .views import UserEngagementView
 
 urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
     path('login/', LoginView.as_view(), name='login'),
-    path('auth/', AuthView.as_view(), name='auth'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('auth/', AuthView.as_view(), name='auth'),
 
-    path('random_quote/', RandomQuoteView.as_view(), name='random_quote'),
+    path('community_quotes/', CommunityQuoteCreateView.as_view(), name='community-quote-create'),
+    path('community_quotes/<int:pk>/', CommunityQuoteDetailView.as_view(), name='community-quote-detail'),
+    path('search_quotes/', SearchQuotesView.as_view(), name='search_quotes'),
     path('delete_quote/', DeleteQuoteView.as_view(), name='delete_quote'),
+    path('random_quote/', RandomQuoteView.as_view(), name='random_quote'),
 
-    path('community-quotes/', CommunityQuoteCreateView.as_view(), name='community-quote-create'),
-    path('community-quotes/<int:pk>/', CommunityQuoteDetailView.as_view(), name='community-quote-detail'),
-
-    path('user-engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
+    path('user_engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
 ]

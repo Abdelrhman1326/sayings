@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth import login, logout
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 # serializers:
 from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
 # models:
@@ -79,6 +80,23 @@ class RandomQuoteView(APIView):
 
         serializer = RandomQuoteSerializer(quote)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SearchQuotesView(GenericAPIView):
+    def get(self, request):
+        q = request.GET.get('q')
+        if not q:
+            return Response({'count': 0, 'results': []})
+
+        qs = Quote.objects.all().filter(
+            Q(quote_text__icontains=q) |
+            Q(quote_author__icontains=q) |
+            Q(quote_genre__icontains=q) |
+            Q(quote_source__icontains=q)
+        ).distinct()
+
+        data = RandomQuoteSerializer(qs, many=True).data
+        return Response({'count': len(data), 'results': data})
 
 
 class DeleteQuoteView(GenericAPIView):

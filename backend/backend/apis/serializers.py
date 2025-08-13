@@ -6,7 +6,6 @@ from django.contrib.auth import authenticate
 from .models import User, Quote, CommunityQuote, UserEngagement
 
 # Auth:
-
 class SignupSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=False,
@@ -84,7 +83,6 @@ class SignupSerializer(serializers.ModelSerializer):
     
 
 # users:
-
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(
         required=True,
@@ -121,7 +119,6 @@ class UserEngagementSerializer(serializers.ModelSerializer):
 
 
 # Quotes:
-
 class RandomQuoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quote
@@ -132,7 +129,6 @@ class DeleteQuoteSerializer(serializers.Serializer):
 
 
 # Community Quotes:
-
 class CommunityQuoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommunityQuote
