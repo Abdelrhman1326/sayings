@@ -127,6 +127,14 @@ class RandomQuoteSerializer(serializers.ModelSerializer):
 class DeleteQuoteSerializer(serializers.Serializer):
     id = serializers.IntegerField()
 
+class QuoteSearchSerializer(serializers.Serializer):
+    q = serializers.CharField(required=True)
+    af = serializers.CharField(required=False)
+    gf = serializers.ListField(
+        child=serializers.CharField(),
+        required=False
+    )
+
 
 # Community Quotes:
 class CommunityQuoteSerializer(serializers.ModelSerializer):

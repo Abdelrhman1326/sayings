@@ -81,23 +81,42 @@ class RandomQuoteView(APIView):
         serializer = RandomQuoteSerializer(quote)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+from .serializers import QuoteSearchSerializer
 
 class SearchQuotesView(GenericAPIView):
-    permission_classes=[IsAuthenticated]
+    permission_classes = [IsAuthenticated]
+    serializer_class = QuoteSearchSerializer
+
     def get(self, request):
-        q = request.GET.get('q')
-        if not q:
-            return Response({'count': 0, 'results': []})
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
 
-        qs = Quote.objects.all().filter(
-            Q(quote_text__icontains=q) |
-            Q(quote_author__icontains=q) |
-            Q(quote_genre__icontains=q) |
-            Q(quote_source__icontains=q)
-        ).distinct()
+        q = validated_data.get('q')
+        author_filter = validated_data.get('af')
+        genre_filter = validated_data.get('gf', [])
 
-        data = RandomQuoteSerializer(qs, many=True).data
-        return Response({'count': len(data), 'results': data})
+        qs = Quote.objects.all()
+
+        if q:
+            qs = qs.filter(
+                Q(quote_text__icontains=q) |
+                Q(quote_author__icontains=q) |
+                Q(quote_genre__icontains=q) |
+                Q(quote_source__icontains=q)
+            )
+
+        if author_filter:
+            qs = qs.filter(quote_author__icontains=author_filter)
+        
+        if genre_filter:
+            qs = qs.filter(quote_genre__in=genre_filter)
+
+        qs = qs.distinct()
+        count = qs.count()
+
+        serializer = RandomQuoteSerializer(qs, many=True)
+        return Response({'count': count, 'results': serializer.data})
 
 
 class DeleteQuoteView(GenericAPIView):
