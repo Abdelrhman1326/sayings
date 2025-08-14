@@ -9,7 +9,6 @@ const SearchBar = () => {
     const [genreFilter, setGenreFilter] = useState("");
 
     const year: number = new Date().getFullYear();
-
     const quotes = [
         {
             text: "Pain and suffering are always inevitable for a large intelligence and a deep heart. The really great men must, I think, have great sadness on earth.",
@@ -109,7 +108,6 @@ const SearchBar = () => {
                         size={20}
                     />
                 </div>
-
                 {/* Author filter */}
                 <input
                     placeholder="Filter by author"
