@@ -5,7 +5,9 @@ import SeachBar from "./subComponents/SearchBar"
 const Search = () => {
   return (
     <div>
-      <Header />
+      <div className="fixed top-0">
+        <Header />
+      </div>
       <SeachBar />
       <SeachBody />
     </div>
