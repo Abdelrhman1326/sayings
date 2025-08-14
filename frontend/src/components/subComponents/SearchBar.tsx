@@ -79,7 +79,7 @@ const SearchBar = () => {
             </div>
 
             {/* RIGHT — Search + Filters (fixed position) */}
-            <div className="fixed right-20 top-[180px] flex flex-col items-start gap-4 z-10">
+            <div className="fixed right-[120px] top-[180px] flex flex-col items-start gap-4 z-10">
                 {/* Search */}
                 <div className="relative">
                     <input
