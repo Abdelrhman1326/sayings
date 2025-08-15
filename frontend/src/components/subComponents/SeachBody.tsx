@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Logo from "../ui/Logo";
 import QuoteCard from "./QuoteCard";
 import useDebounce from "../../hooks/useDebounce";
+import { searchQuotes } from "../../apis/searchApi";
 
 const SearchBody = () => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -14,75 +15,45 @@ const SearchBody = () => {
     const debouncedAuthorFilter = useDebounce(authorFilter, 500);
     const debouncedGenreFilter = useDebounce(genreFilter, 500);
 
-    const PORT = "http://127.0.0.1:8000/";
+    
 
-    interface APIProps {
-        searchQuery: string;
-        authorFilter: string;
-        genreFilter: string;
-    }
+    
 
-    const makeAPIUrl = ({ searchQuery, authorFilter, genreFilter }: APIProps): string => {
-        const genresList = genreFilter.split(",").map((genre) => genre.trim());
-        let APIUrl = `${PORT}apis/search_quotes/?q=${encodeURIComponent(searchQuery)}&af=${encodeURIComponent(authorFilter)}`;
-        genresList.forEach((genre) => {
-            APIUrl += `&gf=${encodeURIComponent(genre)}`;
-        });
-        return APIUrl;
-    };
+    const [fetchedQuotes, setFetchedQuotes] = useState([]);
 
-    const handleRequest = async ({ searchQuery, authorFilter, genreFilter }: APIProps) => {
-        const API: string = makeAPIUrl({ searchQuery, authorFilter, genreFilter });
-        try {
-            const response = await fetch(API);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            console.log("Fetch result:", data);
-        } catch (error) {
-            console.error("Error fetching quotes with fetch:", error);
-        }
-    };
-
-    // Call API when debounced values change
     useEffect(() => {
-        if (debouncedSearchQuery || debouncedAuthorFilter || debouncedGenreFilter) {
-            handleRequest({
-                searchQuery: debouncedSearchQuery,
-                authorFilter: debouncedAuthorFilter,
-                genreFilter: debouncedGenreFilter,
-            });
-        }
+        const fetchQuotes = async () => {
+            if (debouncedSearchQuery || debouncedAuthorFilter || debouncedGenreFilter) {
+                try {
+                    const genresList = debouncedGenreFilter.split(",").map((genre) => genre.trim()).filter(Boolean);
+                    const data = await searchQuotes({
+                        q: debouncedSearchQuery,
+                        af: debouncedAuthorFilter,
+                        gf: genresList,
+                    });
+                    setFetchedQuotes(data.results);
+                } catch (error) {
+                    console.error("Error fetching quotes:", error);
+                    setFetchedQuotes([]); // Clear quotes on error
+                }
+            } else {
+                setFetchedQuotes([]); // Clear quotes if no search query
+            }
+        };
+        fetchQuotes();
     }, [debouncedSearchQuery, debouncedAuthorFilter, debouncedGenreFilter]);
 
     const year: number = new Date().getFullYear();
-    const quotes = [
-        { text: "Pain and suffering are always inevitable for a large intelligence and a deep heart. The really great men must, I think, have great sadness on earth.", author: "Dostoevsky", genre: "Philosophy" },
-        { text: "Code is like humor. When you have to explain it, it's bad.", author: "Cory House", genre: "Programming" },
-        { text: "The best way to predict the future is to invent it.", author: "Alan Kay", genre: "Innovation" },
-        { text: "My thoughts are stars I cannot fathom into constellations.", author: "John Green", genre: "Fiction" },
-        { text: "Some infinities are bigger than other infinities.", author: "John Green", genre: "Fiction" },
-        { text: "In the debate about the atomic bomb, I carry no weight. My concern has been with the work itself, with the science.", author: "J. Robert Oppenheimer", genre: "History" },
-        { text: "Now I am become Death, the destroyer of worlds.", author: "J. Robert Oppenheimer", genre: "History" },
-        { text: "Imagination is more important than knowledge. For knowledge is limited, whereas imagination embraces the entire world.", author: "Albert Einstein", genre: "Science" },
-        { text: "Life is like riding a bicycle. To keep your balance, you must keep moving.", author: "Albert Einstein", genre: "Science" },
-    ];
-
-    const filteredQuotes = quotes.filter(
-        (q) =>
-            q.text.toLowerCase().includes(searchQuery.toLowerCase()) &&
-            q.author.toLowerCase().includes(authorFilter.toLowerCase()) &&
-            q.genre.toLowerCase().includes(genreFilter.toLowerCase())
-    );
 
     return (
         <div className="flex mt-[180px] gap-8">
             {/* LEFT — Quotes */}
             <div className="flex-1 flex flex-col gap-4 ml-32 mb-20 mr-[400px]">
-                {filteredQuotes.map((q, idx) => (
+                {fetchedQuotes.map((q, idx) => (
                     <QuoteCard
                         key={idx}
-                        text={q.text}
-                        author={q.author}
+                        text={q.quote_text}
+                        author={q.quote_author}
                         genre={q.genre}
                     />
                 ))}
