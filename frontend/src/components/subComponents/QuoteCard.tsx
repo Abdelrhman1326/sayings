@@ -8,7 +8,7 @@ interface QuoteCardProps {
 
 const QuoteCard: React.FC<QuoteCardProps> = ({ text, author }) => {
   return (
-    <div className="bg-[#18181B] text-white rounded-lg p-4 flex flex-col gap-2 max-w-2xl border border-gray-700">
+    <div className="bg-[#18181B] text-white rounded-lg p-4 flex flex-col gap-2 max-w-3xl border border-gray-700">
       {/* Quote text */}
       <p className="text-lg italic">“{text}”</p>
 
