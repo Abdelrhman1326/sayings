@@ -1,5 +1,6 @@
 import React from "react";
 import { ThumbsUp, ThumbsDown, Copy, Bookmark } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface QuoteCardProps {
   text: string;
@@ -7,6 +8,17 @@ interface QuoteCardProps {
 }
 
 const QuoteCard: React.FC<QuoteCardProps> = ({ text, author }) => {
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard")
+    } catch (error) {
+      console.error("Failed to copy: ", error);
+      toast.error(`Failed to copy: ${error}`);
+    }
+  }
+
   return (
     <div className="bg-[#18181B] text-white rounded-lg p-4 flex flex-col gap-2 max-w-3xl border border-gray-700">
       {/* Quote text */}
@@ -23,7 +35,9 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ text, author }) => {
         <div className="flex items-center gap-1 cursor-pointer hover:text-white">
           <ThumbsDown size={16} /> <span>0</span>
         </div>
-        <Copy size={16} className="cursor-pointer hover:text-white" />
+        <Copy size={16} className="cursor-pointer hover:text-white"
+          onClick={() => copyToClipboard(text)}
+        />
         <Bookmark size={16} className="cursor-pointer hover:text-white" />
       </div>
     </div>
