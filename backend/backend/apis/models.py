@@ -15,6 +15,12 @@ class Quote(models.Model):
 
     def __str__(self):
         return self.quote_text
+    
+class QuoteInfo(models.Model):
+    quote = models.OneToOneField(Quote, on_delete=models.CASCADE, related_name="info")
+    upvotes = models.PositiveIntegerField(default=0)
+    downvotes = models.PositiveIntegerField(default=0)
+    copy_count = models.PositiveIntegerField(default=0)
 
 class CommunityQuote(models.Model):
     quote_owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_quotes')
@@ -25,5 +31,8 @@ class CommunityQuote(models.Model):
         return self.quote_text
     
 class UserEngagement(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_engagement')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='engagement')
     favorite_genres = models.JSONField(default=list, blank=True)
+
+    liked_quotes = models.ManyToManyField(Quote, related_name="liked_by", blank=True)
+    disliked_quotes = models.ManyToManyField(Quote, related_name="disliked_by", blank=True)

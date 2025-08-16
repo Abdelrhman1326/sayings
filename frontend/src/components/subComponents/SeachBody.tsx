@@ -14,11 +14,6 @@ const SearchBody = () => {
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
     const debouncedAuthorFilter = useDebounce(authorFilter, 500);
     const debouncedGenreFilter = useDebounce(genreFilter, 500);
-
-    
-
-    
-
     const [fetchedQuotes, setFetchedQuotes] = useState([]);
 
     useEffect(() => {
