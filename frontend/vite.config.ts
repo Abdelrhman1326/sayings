@@ -7,5 +7,12 @@ export default defineConfig({
   server: {
     host: true, // enables access via 127.0.0.1, localhost, LAN IP, etc.
     port: 5173, // optional if you want to force a specific port
+    proxy: {
+      '/apis': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 })

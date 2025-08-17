@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/media/abdelrhman/New Volume/AbdElrhman/work/web/sayings/sayings/backend/venv/bin/python3" "$0" "$@"
-' '''
+#!/media/abdelrhman/D/AbdElrhman/work/web/sayings/sayings/backend/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

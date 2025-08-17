@@ -97,7 +97,7 @@ class SearchQuotesView(GenericAPIView):
         author_filter = validated_data.get('af')
         genre_filter = validated_data.get('gf', [])
 
-        qs = Quote.objects.all()
+        qs = Quote.objects.prefetch_related('info').all()
 
         if q:
             qs = qs.filter(
@@ -248,6 +248,22 @@ class UndoQuoteReactionView(APIView):
 
         return Response({"error": "Unknown action"}, status=400)
 
+class QuoteReactionStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, quote_id):
+        user = request.user
+        quote = get_object_or_404(Quote, id=quote_id)
+        engagement, _ = UserEngagement.objects.get_or_create(user=user)
+        
+        liked = engagement.liked_quotes.filter(id=quote.id).exists()
+        disliked = engagement.disliked_quotes.filter(id=quote.id).exists()
+        
+        return Response({
+            "liked_by_current_user": liked,
+            "disliked_by_current_user": disliked
+        })
+
 ###
 
 # Community Quotes:
@@ -294,7 +310,7 @@ class CommunityQuoteDetailView(mixins.RetrieveModelMixin,
         return self.update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        auth_response = self.custom_auth(request)
+        auth_response = self.custom__auth(request)
         if auth_response:
             return auth_response
         return self.destroy(request, *args, **kwargs)

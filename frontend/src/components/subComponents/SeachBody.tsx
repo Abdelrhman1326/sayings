@@ -47,9 +47,12 @@ const SearchBody = () => {
                 {fetchedQuotes.map((q, idx) => (
                     <QuoteCard
                         key={idx}
+                        id={q.id}
                         text={q.quote_text}
                         author={q.quote_author}
                         genre={q.genre}
+                        likes_count={q.likes_count}
+                        dislikes_count={q.dislikes_count}
                     />
                 ))}
             </div>

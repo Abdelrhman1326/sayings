@@ -120,9 +120,12 @@ class UserEngagementSerializer(serializers.ModelSerializer):
 
 # Quotes:
 class RandomQuoteSerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(source='info.upvotes', read_only=True)
+    dislikes_count = serializers.IntegerField(source='info.downvotes', read_only=True)
+
     class Meta:
         model = Quote
-        fields = ['id', 'quote_text', 'quote_author', 'quote_genre', 'quote_source']
+        fields = ['id', 'quote_text', 'quote_author', 'quote_genre', 'quote_source', 'likes_count', 'dislikes_count']
 
 class DeleteQuoteSerializer(serializers.Serializer):
     id = serializers.IntegerField()
