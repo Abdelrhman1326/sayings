@@ -9,10 +9,11 @@ from django.contrib.auth import login, logout
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.db import transaction
 # serializers:
 from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
 # models:
-from .models import User, Quote, CommunityQuote, UserEngagement
+from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo
 
 # Auth views:
 ###
@@ -139,6 +140,113 @@ class DeleteQuoteView(GenericAPIView):
 
         quote.delete()
         return Response({"success": f"Quote with id {quote_id} deleted."}, status=status.HTTP_200_OK)
+    
+class LikeQuoteView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, quote_id):
+        user = request.user
+
+        with transaction.atomic():
+            try:
+                quote = Quote.objects.select_for_update().get(id=quote_id)
+            except Quote.DoesNotExist:
+                return Response({"error": "Quote not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            engagement, _ = UserEngagement.objects.get_or_create(user=user)
+            quote_info, _ = QuoteInfo.objects.get_or_create(quote=quote)
+
+            prev_liked = engagement.liked_quotes.filter(id=quote.id).exists()
+            prev_disliked = engagement.disliked_quotes.filter(id=quote.id).exists()
+
+            if prev_liked:
+                return Response({"error": "User already liked this quote"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if prev_disliked:
+                engagement.disliked_quotes.remove(quote)
+                if quote_info.downvotes > 0:
+                    quote_info.downvotes -= 1
+            
+            quote_info.upvotes += 1
+            quote_info.save()
+            engagement.liked_quotes.add(quote)
+
+        return Response({
+            "success": "Quote liked",
+            "likes_count": quote_info.upvotes,
+            "dislikes_count": quote_info.downvotes
+        }, status=status.HTTP_200_OK)
+
+
+    # endpoint to dislike a quote
+class DislikeQuoteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, quote_id):
+        user = request.user
+
+        with transaction.atomic():
+            try:
+                quote = Quote.objects.select_for_update().get(id=quote_id)
+            except Quote.DoesNotExist:
+                return Response({"error": "Quote not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            engagement, _ = UserEngagement.objects.get_or_create(user=user)
+            quote_info, _ = QuoteInfo.objects.get_or_create(quote=quote)
+
+            prev_disliked = engagement.disliked_quotes.filter(id=quote.id).exists()
+
+            if prev_disliked:
+                return Response({"error": "User already disliked this quote"}, status=status.HTTP_400_BAD_REQUEST)
+
+            prev_liked = engagement.liked_quotes.filter(id=quote.id).exists()
+            if prev_liked:
+                engagement.liked_quotes.remove(quote)
+                if quote_info.upvotes > 0:
+                    quote_info.upvotes -= 1
+            
+            quote_info.downvotes += 1
+            quote_info.save()
+            engagement.disliked_quotes.add(quote)
+
+        return Response({
+            "success": "Quote disliked",
+            "likes_count": quote_info.upvotes,
+            "dislikes_count": quote_info.downvotes
+        }, status=status.HTTP_200_OK)
+    
+class UndoQuoteReactionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, action, quote_id):
+        user = request.user
+
+        # Get the quote safely
+        try:
+            quote = Quote.objects.get(id=quote_id)
+        except Quote.DoesNotExist:
+            return Response({"error": "Quote doesn't exist"}, status=404)
+
+        if action == "like":
+            if not user.engagement.liked_quotes.filter(id=quote_id).exists():
+                return Response({"error": "User has not liked this quote"}, status=404)
+            # undo like
+            user.engagement.liked_quotes.remove(quote)
+            if quote.info.upvotes > 0:
+                quote.info.upvotes -= 1
+                quote.info.save()
+            return Response({"success": "Undo like on quote"}, status=200)
+
+        elif action == "dislike":
+            if not user.engagement.disliked_quotes.filter(id=quote_id).exists():
+                return Response({"error": "User has not disliked this quote"}, status=404)
+            # undo dislike
+            user.engagement.disliked_quotes.remove(quote)
+            if quote.info.downvotes > 0:
+                quote.info.downvotes -= 1
+                quote.info.save()
+            return Response({"success": "Undo dislike on quote"}, status=200)
+
+        return Response({"error": "Unknown action"}, status=400)
 
 ###
 
