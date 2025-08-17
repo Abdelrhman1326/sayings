@@ -234,7 +234,7 @@ class UndoQuoteReactionView(APIView):
             if quote.info.upvotes > 0:
                 quote.info.upvotes -= 1
                 quote.info.save()
-            return Response({"success": "Undo like on quote"}, status=200)
+            return Response({"success": "Undo like on quote", "likes_count": quote.info.upvotes, "dislikes_count": quote.info.downvotes}, status=200)
 
         elif action == "dislike":
             if not user.engagement.disliked_quotes.filter(id=quote_id).exists():
@@ -244,7 +244,7 @@ class UndoQuoteReactionView(APIView):
             if quote.info.downvotes > 0:
                 quote.info.downvotes -= 1
                 quote.info.save()
-            return Response({"success": "Undo dislike on quote"}, status=200)
+            return Response({"success": "Undo dislike on quote", "likes_count": quote.info.upvotes, "dislikes_count": quote.info.downvotes}, status=200)
 
         return Response({"error": "Unknown action"}, status=400)
 
