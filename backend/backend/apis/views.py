@@ -46,7 +46,6 @@ class LoginView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class AuthView(APIView):
     def get(self, request):
@@ -119,7 +118,6 @@ class SearchQuotesView(GenericAPIView):
         serializer = RandomQuoteSerializer(qs, many=True)
         return Response({'count': count, 'results': serializer.data})
 
-
 class DeleteQuoteView(GenericAPIView):
     queryset = Quote.objects.all()
     serializer_class = DeleteQuoteSerializer
@@ -175,7 +173,6 @@ class LikeQuoteView(APIView):
             "likes_count": quote_info.upvotes,
             "dislikes_count": quote_info.downvotes
         }, status=status.HTTP_200_OK)
-
 
     # endpoint to dislike a quote
 class DislikeQuoteView(APIView):
@@ -265,7 +262,6 @@ class QuoteReactionStatusView(APIView):
         })
 
 ###
-
 # Community Quotes:
 class CommunityQuoteCreateView(mixins.CreateModelMixin,
                                 generics.GenericAPIView):
