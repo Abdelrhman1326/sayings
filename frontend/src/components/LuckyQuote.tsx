@@ -133,7 +133,7 @@ const LuckyQuote = () => {
         ) : (
           <>
             {/* Full-page Light Beam */}
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-cyan-400/30 via-cyan-300/20 to-transparent blur-3xl animate-[pulse_6s_infinite] pointer-events-none" />
+            <div className="absolute top-10 left-0 w-full h-full bg-gradient-to-b from-cyan-400/30 via-cyan-300/20 to-transparent blur-3xl animate-[pulse_6s_infinite] pointer-events-none" />
             <NeonQuoteCard
               id={quote_id || 0}
               text={quote || ""}
