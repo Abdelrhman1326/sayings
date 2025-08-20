@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
 
-
 export const likeQuote = async (quote_id: number) => {
     try {
         const csrfToken = getCookie('csrftoken');

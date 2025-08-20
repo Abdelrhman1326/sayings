@@ -73,6 +73,7 @@ import random
 from django.db.models.functions import Random
 
 class RandomQuoteView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         quote = Quote.objects.order_by(Random()).first()  # One random row only
         if not quote:

@@ -13,11 +13,11 @@ urlpatterns = [
     path('community_quotes/<int:pk>/', CommunityQuoteDetailView.as_view(), name='community-quote-detail'),
     path('search_quotes/', SearchQuotesView.as_view(), name='search_quotes'),
     path('delete_quote/', DeleteQuoteView.as_view(), name='delete_quote'),
-    path('random_quote/', RandomQuoteView.as_view(), name='random_quote'),
 
     path('user_engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
     path('quotes/<int:quote_id>/like/', LikeQuoteView.as_view(), name='like-quote'),
     path('quotes/<int:quote_id>/dislike/', DislikeQuoteView.as_view(), name='dislike-quote'),
     path('quotes/undo/<str:action>/<int:quote_id>/', UndoQuoteReactionView.as_view(), name='undo-quote-reaction'),
-    path('quotes/<int:quote_id>/reaction-status/', QuoteReactionStatusView.as_view(), name='quote-reaction-status')
+    path('quotes/<int:quote_id>/reaction-status/', QuoteReactionStatusView.as_view(), name='quote-reaction-status'),
+    path('quotes/random_quote/', RandomQuoteView.as_view(), name='random_quote'),
 ]
