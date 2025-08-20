@@ -7,8 +7,8 @@ const HomeBody = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="pl-32 pr-32 pt-12 cursor-default flex flex-row">
-      <div className="mt-10">
+    <div className="pl-32 pr-32 pt-12 cursor-default flex flex-row flex items-center">
+      <div>
         <h1 className="text-white font-jsMath font-bold text-[100px] mt-16 leading-[1]">
           <span className="block">Discover</span>
           <span className="block mt-2">Hidden Lines</span>

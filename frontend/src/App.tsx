@@ -11,7 +11,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Home from './components/Home';
 import QuoteOfTheDay from './components/QuoteOfTheDay';
-import Browse from './components/Browse';
+import Feed from './components/Browse';
 import Search from './components/Search';
 import Saved from './components/Saved';
 import LuckyQuote from './components/LuckyQuote';
@@ -45,7 +45,7 @@ function App() {
         <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />
         <Route path="/home" element={<Home />} />
         <Route path="/quote-of-the-day" element={<ProtectedRoute><QuoteOfTheDay /></ProtectedRoute>} />
-        <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />
+        <Route path="/browse" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
         <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
         <Route path="/saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
         <Route path="/lucky-quote" element={<ProtectedRoute><LuckyQuote /></ProtectedRoute>} />

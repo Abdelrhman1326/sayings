@@ -1,6 +1,6 @@
 import Header from "./Header";
 
-const Browse = () => {
+const Feed = () => {
   return (
     <div>
       <Header />
@@ -8,4 +8,4 @@ const Browse = () => {
   )
 }
 
-export default Browse;
+export default Feed;
