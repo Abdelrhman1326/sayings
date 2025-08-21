@@ -41,9 +41,9 @@ const Feed = () => {
       <Header />
 
       {/* navigation */}
-      <div className="flex flex-col text-white w-full items-center mt-8">
+      <div className="flex flex-col text-white w-full items-center mt-6">
         {/* Tabs */}
-        <div className="flex flex-row gap-4 text-[24px]">
+        <div className="flex flex-row gap-4 text-[26px]">
           {tabs.map((tab) => (
             <p
               key={tab}
@@ -63,7 +63,7 @@ const Feed = () => {
         {/* Show search bar only if active tab is Search */}
         {activeTab === "Search" && (
           <>
-            <div className="mt-6 flex items-center gap-2 bg-[#18181B] px-4 py-2 rounded-2xl w-[800px] h-[60px]">
+            <div className="mt-6 flex items-center gap-2 bg-[#1D1D1D] px-4 py-2 rounded-2xl w-[800px] h-[60px]">
               <input
                 type="text"
                 placeholder="Search by words, author, or genre"

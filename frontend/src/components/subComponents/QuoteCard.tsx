@@ -101,7 +101,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ id, text, author, likes_count, di
   };
 
   return (
-    <div className="bg-[#18181B] text-white rounded-lg p-4 flex flex-col gap-2 max-w-4xl border border-gray-700">
+    <div className="bg-[#1D1D1D] text-white rounded-lg p-4 flex flex-col gap-2 max-w-4xl border border-[#1D1D1D]">
       {/* Quote text */}
       <p className="text-lg italic">“{text}”</p>
 
