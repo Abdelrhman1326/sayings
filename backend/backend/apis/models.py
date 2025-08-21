@@ -33,6 +33,6 @@ class CommunityQuote(models.Model):
 class UserEngagement(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='engagement')
     favorite_genres = models.JSONField(default=list, blank=True)
-
     liked_quotes = models.ManyToManyField(Quote, related_name="liked_by", blank=True)
     disliked_quotes = models.ManyToManyField(Quote, related_name="disliked_by", blank=True)
+    saved_quotes = models.ManyToManyField(Quote, related_name="saved_by", blank=True)
