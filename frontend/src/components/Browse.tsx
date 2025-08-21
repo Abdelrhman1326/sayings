@@ -10,6 +10,7 @@ interface Quote {
   quote_author: string;
   likes_count: number | null;
   dislikes_count: number | null;
+  quote_source: string;
 }
 
 const Feed = () => {
@@ -38,9 +39,11 @@ const Feed = () => {
   return (
     <div>
       {/* header */}
-      <Header />
+      <div className="fixed top-0 left-0 w-full z-50">
+        <Header />
+      </div>
       {/* navigation */}
-      <div className="flex flex-col text-white w-full items-center mt-6">
+      <div className="flex flex-col text-white w-full items-center mt-[120px]">
         {/* Tabs */}
         <div className="flex flex-row gap-4 text-[26px]">
           {tabs.map((tab) => (
@@ -90,10 +93,14 @@ const Feed = () => {
                     author={quote.quote_author}
                     likes_count={quote.likes_count}
                     dislikes_count={quote.dislikes_count}
+                    source={quote.quote_source}
                   />
                 ))
               ) : (
-                <p className="text-gray-400 text-center">No results</p>
+                <div>
+                  {query.trim() !== "" ? ""
+                  : <p className="text-gray-400 text-center">Search now</p>}
+                </div>
               )}
             </div>
           </>

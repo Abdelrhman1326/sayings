@@ -12,9 +12,10 @@ interface QuoteCardProps {
   author: string;
   likes_count: number | null;
   dislikes_count: number | null;
+  source: string;
 }
 
-const QuoteCard: React.FC<QuoteCardProps> = ({ id, text, author, likes_count, dislikes_count }) => {
+const QuoteCard: React.FC<QuoteCardProps> = ({ id, text, author, likes_count, dislikes_count, source="" }) => {
   const [likes, setLikes] = useState(likes_count ?? 0);
   const [dislikes, setDislikes] = useState(dislikes_count ?? 0);
   const [lastAction, setLastAction] = useState<"like" | "dislike" | null>(null);
@@ -107,6 +108,8 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ id, text, author, likes_count, di
 
       {/* Author */}
       <p className="text-right text-gray-400">— {author}</p>
+
+      {source !== "" && <p className="text-right text-gray-400">{source}</p>}
 
       {/* Actions */}
       <div className="flex items-center gap-4 text-gray-400 mt-2">
