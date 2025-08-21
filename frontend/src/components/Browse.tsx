@@ -39,7 +39,6 @@ const Feed = () => {
     <div>
       {/* header */}
       <Header />
-
       {/* navigation */}
       <div className="flex flex-col text-white w-full items-center mt-6">
         {/* Tabs */}
