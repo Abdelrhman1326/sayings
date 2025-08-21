@@ -38,8 +38,8 @@ const Header = () => {
         <p onClick={() => navigate('/home')} className={getNavItemStyle("home")}>Home</p>
         {/* <p onClick={() => navigate('/quote-of-the-day')} className={getNavItemStyle("quote-of-the-day")}>Quote of the day</p> */}
         <p onClick={() => navigate('/browse')} className={getNavItemStyle("browse")}>Browse</p>
-        <p onClick={() => navigate('/search')} className={getNavItemStyle("search")}>Search</p>
-        <p onClick={() => navigate('/saved')} className={getNavItemStyle("saved")}>Saved</p>
+        {/* <p onClick={() => navigate('/search')} className={getNavItemStyle("search")}>Search</p> */}
+        {/* <p onClick={() => navigate('/saved')} className={getNavItemStyle("saved")}>Saved</p> */}
       </nav>
       <div className="pr-32 absolute right-4">
         <Button
