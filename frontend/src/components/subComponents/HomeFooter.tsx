@@ -57,8 +57,8 @@ const HomeFooter = () => {
 
   return (
     <div className="relative overflow-hidden text-white font-ibm font-bold h-[140px]">
-      <div className="absolute bg-bgColor w-28 h-[140px] bottom-0 left-0 z-10" />
-      <div className="absolute bg-bgColor w-28 h-[140px] bottom-0 right-0 z-10" />
+      <div className="absolute w-[220px] h-[100px] bg-gradient-to-r from-bgColor via-bgColor to-transparent bottom-0 left-0 z-10" />
+      <div className="absolute w-[220px] h-[100px] bg-gradient-to-l from-bgColor via-bgColor to-transparent bottom-0 right-0 z-10" />
 
       {words.length > 0 && (
         <div

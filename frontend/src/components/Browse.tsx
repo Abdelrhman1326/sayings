@@ -24,7 +24,7 @@ const Feed = () => {
     if (!query.trim()) return; // prevent empty searches
     try {
       const response = await searchQuotes({ q: query, af: "", gf: [] });
-      setQuotes(response.results || []); // ✅ grab results array
+      setQuotes(response.results || []); // grab results array
     } catch (error) {
       console.error("Search error:", error);
     }
