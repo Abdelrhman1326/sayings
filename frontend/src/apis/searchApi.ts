@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
 
-const SEARCH_API_URL = '/apis/search_quotes/';
+const SEARCH_API_URL = '/apis/quotes/search_quotes/';
 
 interface SearchParams {
     q: string;
