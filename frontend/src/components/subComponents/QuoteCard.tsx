@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { ThumbsUp, ThumbsDown, Copy, Bookmark } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Copy, Bookmark, BookmarkCheck  } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { likeQuote } from "../../apis/likeQuote";
 import { dislikeQuote } from "../../apis/dislikeQuote";
 import { undoReaction } from "../../apis/undoReaction";
+import { saveQuote } from "../../apis/saveQuote";
 
 interface QuoteCardProps {
   id: number;
@@ -20,6 +21,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ id, text, author, likes_count, di
   const [dislikes, setDislikes] = useState(dislikes_count ?? 0);
   const [lastAction, setLastAction] = useState<"like" | "dislike" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<boolean | null>(null);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -101,6 +103,25 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ id, text, author, likes_count, di
     }
   };
 
+  const handleSave = async () => {
+    try {
+      const response : any = await saveQuote(id);
+      const message = response.data.message;
+      if (message === "Quote saved") {
+        setSaved(true)
+        toast.success("Saved");
+      } else if (message === "Quote unsaved") {
+        setSaved(false);
+        toast.success("Unsaved");
+      } else {
+        
+      }
+    } catch (err: any) {
+      const message = err?.message;
+      toast.error(`Error: ${message}`)
+    }
+  }
+
   return (
     <div className="bg-[#1D1D1D] text-white rounded-lg p-4 flex flex-col gap-2 max-w-4xl border border-[#1D1D1D]">
       {/* Quote text */}
@@ -130,7 +151,15 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ id, text, author, likes_count, di
           className="cursor-pointer hover:text-white"
           onClick={() => copyToClipboard(text)}
         />
-        <Bookmark size={16} className="cursor-pointer hover:text-white" />
+        {saved ? 
+          <BookmarkCheck size={18} className="cursor-pointer hover:text-white"
+            onClick={handleSave}
+          />
+        :
+          <Bookmark size={18} className="cursor-pointer hover:text-white"
+            onClick={handleSave}
+          />
+        }
       </div>
       {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
     </div>

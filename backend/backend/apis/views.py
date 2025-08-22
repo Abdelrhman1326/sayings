@@ -262,6 +262,28 @@ class QuoteReactionStatusView(APIView):
             "disliked_by_current_user": disliked
         })
 
+class SaveQuoteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, quote_id):
+        try:
+            quote_to_save = Quote.objects.get(id=quote_id)
+
+            # Ensure user has an engagement record
+            engagement, _ = UserEngagement.objects.get_or_create(user=request.user)
+
+            if engagement.saved_quotes.filter(id=quote_to_save.id).exists():
+                # Already saved → remove (unsave)
+                engagement.saved_quotes.remove(quote_to_save)
+                return Response({"message": "Quote unsaved"}, status=status.HTTP_200_OK)
+            else:
+                # Not saved yet → save
+                engagement.saved_quotes.add(quote_to_save)
+                return Response({"message": "Quote saved"}, status=status.HTTP_200_OK)
+
+        except Quote.DoesNotExist:
+            return Response({"error": "Quote not found"}, status=status.HTTP_404_NOT_FOUND)
+
 ###
 # Community Quotes:
 class CommunityQuoteCreateView(mixins.CreateModelMixin,
