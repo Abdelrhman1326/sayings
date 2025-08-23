@@ -367,5 +367,5 @@ class UserEngagementView(APIView):
             "message": f"Genres updated for user {user.username}.",
             "favorite_genres": engagement.favorite_genres
         }, status=200)
-    
+
 ###

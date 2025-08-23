@@ -1,6 +1,6 @@
 import Header from "./Header";
 
-const Saved = () => {
+const Profile = () => {
   return (
     <div>
       <Header />
@@ -8,4 +8,4 @@ const Saved = () => {
   )
 }
 
-export default Saved;
+export default Profile;

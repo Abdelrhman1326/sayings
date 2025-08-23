@@ -53,10 +53,11 @@ class Command(BaseCommand):
         except FileNotFoundError:
             raise CommandError(f"File not found: {file_path}")
 
+
     def bulk_insert(self, quotes):
         try:
-            Quote.objects.bulk_create(quotes, ignore_conflicts=True)
-            return len(quotes)
+            created = Quote.objects.bulk_create(quotes, ignore_conflicts=True)
+            return len(created)
         except IntegrityError as e:
             self.stderr.write(f"IntegrityError during bulk insert: {e}")
             return 0
