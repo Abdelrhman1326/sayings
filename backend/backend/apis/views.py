@@ -83,6 +83,8 @@ class RandomQuoteView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 from .serializers import QuoteSearchSerializer
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+
 
 class SearchQuotesView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -99,17 +101,23 @@ class SearchQuotesView(GenericAPIView):
 
         qs = Quote.objects.prefetch_related('info').all()
 
+        # Use PostgreSQL full-text search
         if q:
-            qs = qs.filter(
-                Q(quote_text__icontains=q) |
-                Q(quote_author__icontains=q) |
-                Q(quote_genre__icontains=q) |
-                Q(quote_source__icontains=q)
+            search_vector = (
+                SearchVector('quote_text', weight='A') +
+                SearchVector('quote_author', weight='B') +
+                SearchVector('quote_genre', weight='C') +
+                SearchVector('quote_source', weight='D')
             )
+            search_query = SearchQuery(q)
+
+            qs = qs.annotate(
+                rank=SearchRank(search_vector, search_query)
+            ).filter(rank__gte=0.1).order_by('-rank')
 
         if author_filter:
             qs = qs.filter(quote_author__icontains=author_filter)
-        
+
         if genre_filter:
             qs = qs.filter(quote_genre__in=genre_filter)
 
@@ -118,6 +126,7 @@ class SearchQuotesView(GenericAPIView):
 
         serializer = RandomQuoteSerializer(qs, many=True)
         return Response({'count': count, 'results': serializer.data})
+
 
 class DeleteQuoteView(GenericAPIView):
     queryset = Quote.objects.all()
