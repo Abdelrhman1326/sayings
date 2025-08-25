@@ -139,7 +139,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         />
         <button
           onClick={handleSearch}
-          className="bg-[#9CA3AF] text-black font-bold px-4 py-1 rounded-2xl text-[20px]"
+          className="bg-[#9CA3AF] text-black font-bold px-4 py-1 rounded-2xl text-[20px] hover:shadow-md hover:shadow-purple-500/50 transition duration-300 ease-in"
         >
           Search
         </button>
