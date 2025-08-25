@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, mixins, status
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -84,13 +84,24 @@ class RandomQuoteView(APIView):
 
 from .serializers import QuoteSearchSerializer
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from rest_framework.pagination import LimitOffsetPagination
 
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.pagination import LimitOffsetPagination
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from rest_framework.permissions import IsAuthenticated
+from .models import Quote
+from .serializers import QuoteSearchSerializer, RandomQuoteSerializer
 
-class SearchQuotesView(GenericAPIView):
+class SearchQuotesView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = QuoteSearchSerializer
+    pagination_class = LimitOffsetPagination
+    queryset = Quote.objects.all()
 
     def get(self, request):
+        # validate query params
         serializer = self.get_serializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
@@ -101,7 +112,7 @@ class SearchQuotesView(GenericAPIView):
 
         qs = Quote.objects.prefetch_related('info').all()
 
-        # Use PostgreSQL full-text search
+        # PostgreSQL full-text search
         if q:
             search_vector = (
                 SearchVector('quote_text', weight='A') +
@@ -110,7 +121,6 @@ class SearchQuotesView(GenericAPIView):
                 SearchVector('quote_source', weight='D')
             )
             search_query = SearchQuery(q)
-
             qs = qs.annotate(
                 rank=SearchRank(search_vector, search_query)
             ).filter(rank__gte=0.1).order_by('-rank')
@@ -122,10 +132,13 @@ class SearchQuotesView(GenericAPIView):
             qs = qs.filter(quote_genre__in=genre_filter)
 
         qs = qs.distinct()
-        count = qs.count()
 
-        serializer = RandomQuoteSerializer(qs, many=True)
-        return Response({'count': count, 'results': serializer.data})
+        # Apply pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(qs, request, view=self)
+
+        serializer = RandomQuoteSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class DeleteQuoteView(GenericAPIView):
@@ -292,6 +305,14 @@ class SaveQuoteView(APIView):
 
         except Quote.DoesNotExist:
             return Response({"error": "Quote not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+class RetrieveSavedQuotesView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = RandomQuoteSerializer
+    
+    def get_queryset(self):
+        engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
+        return engagement.saved_quotes.all().select_related("info")
 
 ###
 # Community Quotes:

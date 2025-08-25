@@ -12,12 +12,12 @@ import Signup from './components/Signup';
 import Home from './components/Home';
 import QuoteOfTheDay from './components/QuoteOfTheDay';
 import Feed from './components/Browse';
-import Search from './components/Search';
 import Profile from './components/Profile.tsx';
 import LuckyQuote from './components/LuckyQuote';
 import NotFound from './components/NotFound';
 
 import { getAuth } from './apis/auth';
+import SavedQuotes from './components/SavedQuotes.tsx';
 
 function App() {
 
@@ -46,8 +46,8 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/quote-of-the-day" element={<ProtectedRoute><QuoteOfTheDay /></ProtectedRoute>} />
         <Route path="/browse" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
-        <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile/saved-quotes" element={<ProtectedRoute><SavedQuotes /></ProtectedRoute>} />
         <Route path="/lucky-quote" element={<ProtectedRoute><LuckyQuote /></ProtectedRoute>} />
       </Routes>
       <ToastContainer position="top-right" theme='dark' autoClose={3000} />
