@@ -93,11 +93,17 @@ from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.permissions import IsAuthenticated
 from .models import Quote
 from .serializers import QuoteSearchSerializer, RandomQuoteSerializer
+from rest_framework.pagination import PageNumberPagination
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'limit'
+    max_page_size = 100
 
 class SearchQuotesView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = QuoteSearchSerializer
-    pagination_class = LimitOffsetPagination
+    pagination_class = StandardResultsSetPagination
     queryset = Quote.objects.all()
 
     def get(self, request):

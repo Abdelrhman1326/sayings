@@ -7,6 +7,8 @@ interface SearchParams {
     q: string;
     af: string;
     gf: string[];
+    limit?: number;   // default 50
+    page?: number;    // default 1
 }
 
 export const searchQuotes = async (params: SearchParams) => {
@@ -16,7 +18,9 @@ export const searchQuotes = async (params: SearchParams) => {
             params: {
                 q: params.q,
                 af: params.af,
-                gf: params.gf
+                gf: params.gf,
+                limit: params.limit || 50,
+                page: params.page || 1,
             },
             withCredentials: true,
             headers: {
