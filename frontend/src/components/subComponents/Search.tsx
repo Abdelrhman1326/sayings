@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import QuoteCard from "./QuoteCard";
 import { toast } from "react-toastify";
 import { searchQuotes } from "../../apis/searchApi";
@@ -26,17 +26,31 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [latestRemovedPage, setLatestRemovedPage] = useState<number | null>(null);
-  const [scrollRestore, setScrollRestore] = useState<number | null>(null);
+
+  // Anchor used to preserve viewport position when we prepend & trim bottom.
+  const anchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
 
   const fetchQuotes = async (pageNumber: number, prepend = false) => {
     if (loading || (!hasMore && !prepend)) return;
     if (prepend && latestRemovedPage == 0) return; // no more pages to restore
 
     setLoading(true);
-    console.log(`Loading quotes... (page ${pageNumber})`)
+    console.log(`Loading quotes... (page ${pageNumber})`);
     const toastId = toast.loading("Loading quotes...", { autoClose: false });
 
     try {
+      // Capture the current first item's DOM position as an anchor (only when prepending)
+      if (prepend && quotes.length > 0) {
+        const prevFirstId = quotes[0]?.id;
+        const el = document.getElementById(`quote-${prevFirstId}`);
+        anchorRef.current = {
+          id: prevFirstId ?? null,
+          top: el ? el.getBoundingClientRect().top : 0,
+        };
+      } else {
+        anchorRef.current = { id: null, top: 0 };
+      }
+
       const data = await searchQuotes({
         q: query,
         af: "",
@@ -45,7 +59,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         page: pageNumber,
       });
 
-      setQuotes(prev => {
+      setQuotes((prev) => {
         let combined: Quote[];
 
         if (prepend) {
@@ -63,18 +77,14 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         // Remove last 50 at bottom if > 100 (prepend)
         if (prepend && combined.length > 100) {
           combined = combined.slice(0, 100);
-          setPage(prev => prev - 1);
+          setPage((prevPage) => prevPage - 1);
         }
 
         return combined;
       });
 
       if (prepend && latestRemovedPage !== null) {
-        // Save scroll offset before DOM update
-        const distanceFromBottom = document.body.scrollHeight - window.scrollY - window.innerHeight;
-        setScrollRestore(distanceFromBottom);
-
-        // After prepending, move to the previous removed page
+        // We no longer use distance-from-bottom. We rely on the anchor delta in useLayoutEffect.
         setLatestRemovedPage(latestRemovedPage - 1);
       }
 
@@ -82,7 +92,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
       if (!data.next || data.results.length < CHUNK_SIZE) {
         if (!prepend) setHasMore(false);
       } else if (!prepend) {
-        setPage(prev => prev + 1);
+        setPage((prevPage) => prevPage + 1);
       }
     } catch (err) {
       console.error(err);
@@ -93,13 +103,23 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
     }
   };
 
-  // Restore scroll after DOM updates
+  // Restore scroll so the previously-first-visible item stays in place,
+  // regardless of how much was inserted at top or removed from bottom.
   useLayoutEffect(() => {
-    if (scrollRestore !== null) {
-      window.scrollTo(0, document.body.scrollHeight - scrollRestore - window.innerHeight);
-      setScrollRestore(null);
+    const { id, top } = anchorRef.current;
+    if (id !== null) {
+      const el = document.getElementById(`quote-${id}`);
+      if (el) {
+        const newTop = el.getBoundingClientRect().top;
+        const delta = newTop - top;
+        if (delta !== 0) {
+          window.scrollBy(0, delta);
+        }
+      }
+      // clear anchor
+      anchorRef.current = { id: null, top: 0 };
     }
-  }, [quotes, scrollRestore]);
+  }, [quotes]);
 
   const handleSearch = () => {
     setQuotes([]);
@@ -126,7 +146,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         fetchQuotes(page);
       }
 
-      // Scroll up → fetch latest removed page
+      // Scroll up → fetch latest removed page (prepend)
       if (window.scrollY < 200 && latestRemovedPage !== null) {
         fetchQuotes(latestRemovedPage, true);
       }
@@ -160,7 +180,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
       <div className="mt-6 w-[800px]">
         {quotes.length > 0 ? (
           quotes.map((quote) => (
-            <div key={quote.id} className="mb-4">
+            <div id={`quote-${quote.id}`} key={quote.id} className="mb-4">
               <QuoteCard
                 id={quote.id}
                 text={quote.quote_text}
