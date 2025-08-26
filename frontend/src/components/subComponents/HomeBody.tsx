@@ -27,7 +27,6 @@ const HomeBody = () => {
           />
         </div>
       </div>
-
       <div className="ml-20 lg:flex md:hidden">
         <img src={illustration} alt="illustration" width={600} className="flex items-center" />
       </div>
