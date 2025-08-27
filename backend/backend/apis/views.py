@@ -15,7 +15,7 @@ from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerialize
 # models:
 from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo
 
-# Auth views:
+# Auth/user views:
 ###
 class SignupView(APIView):
     queryset = User.objects.all()
@@ -63,7 +63,20 @@ class AuthView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         logout(request)
-        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)    
+        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+
+  
+class RetrieveUsernameView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+            user = request.user
+            username = getattr(user, "username", None)
+            
+            if username:
+                return Response({"username": username})
+            else:
+                return Response({"error": "username not found"}, status=404)
 
 ###
 

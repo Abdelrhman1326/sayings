@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import SignupView, LoginView, AuthView, LogoutView
 from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView, CommunityQuoteDetailView
-from .views import UserEngagementView, LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView
+from .views import UserEngagementView, LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView, RetrieveUsernameView
 
 urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
@@ -13,7 +13,8 @@ urlpatterns = [
     path('community_quotes/<int:pk>/', CommunityQuoteDetailView.as_view(), name='community-quote-detail'),
     path('delete_quote/', DeleteQuoteView.as_view(), name='delete_quote'),
 
-    path('user_engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
+    path('users/engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
+    path('users/username/', RetrieveUsernameView.as_view(), name='retrieve-username'),
     path('quotes/search_quotes/', SearchQuotesView.as_view(), name='search_quotes'),
     path('quotes/<int:quote_id>/like/', LikeQuoteView.as_view(), name='like-quote'),
     path('quotes/<int:quote_id>/dislike/', DislikeQuoteView.as_view(), name='dislike-quote'),
