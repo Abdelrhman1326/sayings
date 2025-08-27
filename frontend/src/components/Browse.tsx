@@ -3,6 +3,7 @@ import Header from "./Header";
 
 import { searchQuotes } from "../apis/searchApi";
 import Search from "./subComponents/Search";
+import Community from "./subComponents/Community";
 
 interface Quote {
   id: number;
@@ -66,6 +67,11 @@ const Feed = () => {
         {activeTab === "Search" && (
           <>
             <Search query={ query } setQuery={ setQuery } handleKeyDown={ handleKeyDown } handleSearchQueries={ handleSearchQueries } quotes={ quotes } />
+          </>
+        )}
+        {activeTab === 'Community' && (
+          <>
+            <Community />
           </>
         )}
       </div>
