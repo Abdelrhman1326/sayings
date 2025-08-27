@@ -27,6 +27,13 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
   const [hasMore, setHasMore] = useState(true);
   const [latestRemovedPage, setLatestRemovedPage] = useState<number | null>(null);
 
+  const [resultsCount, setResultsCount] = useState<number | null>(null);
+
+  // use effect to handle search message in the page:
+  useLayoutEffect(() => {
+    setResultsCount(null);
+  }, [query]);
+
   // Anchor used to preserve viewport position when we prepend & trim bottom.
   const anchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
 
@@ -58,6 +65,12 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         limit: CHUNK_SIZE,
         page: pageNumber,
       });
+
+      if (data.count === 0) {
+        setResultsCount(0);
+      } else {
+        setResultsCount(data.count);
+      }
 
       setQuotes((prev) => {
         let combined: Quote[];
@@ -122,6 +135,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
   }, [quotes]);
 
   const handleSearch = () => {
+    setResultsCount(null);
     setQuotes([]);
     setPage(1);
     setHasMore(true);
@@ -191,11 +205,12 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
               />
             </div>
           ))
-        ) : query.trim() === "" ? (
+        ) : query.trim() === "" || resultsCount === null ? (
           <p className="text-gray-400 text-center mt-4">Search now</p>
-        ) : (
+        ) : resultsCount === 0 ? (
           <p className="text-gray-400 text-center mt-4">No results</p>
-        )}
+        ) : <></>
+      }
       </div>
     </div>
   );
