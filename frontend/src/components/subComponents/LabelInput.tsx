@@ -39,12 +39,12 @@ const LabelInput = ({ className = "" }: LabelInputProps) => {
         {labels.map((label) => (
           <span
             key={label}
-            className="bg-uiPrimary border-solid border-2 border-purple-400 text-purple-900 px-3 py-1 rounded-full flex items-center gap-2"
+            className="bg-uiPrimary text-purple-950 font-semibold px-3 py-1 rounded-full flex items-center gap-2"
           >
             {label}
             <button
               onClick={() => removeLabel(label)}
-              className="text-black font-bold"
+              className="text-purple-950 font-extrabold"
             >
               ×
             </button>
