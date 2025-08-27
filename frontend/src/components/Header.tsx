@@ -53,6 +53,9 @@ const Header = () => {
               try {
                 navigate('/home');
                 await logout();
+
+                localStorage.removeItem("sayings_username"); // remove username from local storage
+
                 setIsAuthenticated(false);
                 toast.success("Logout successful")
                 navigate('/login');

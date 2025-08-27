@@ -10,6 +10,11 @@ const Community = () => {
   useLayoutEffect(() => {
     const fetchUsername = async () => {
       try {
+        const cachedUsername = localStorage.getItem("sayings_username");
+        if (cachedUsername) { // check if previously cashed
+          setUsername(cachedUsername);
+          return; // Skip api call, data found locally
+        }
         const response = await getUsername();
 
         if (response.error) {
@@ -19,8 +24,10 @@ const Community = () => {
         }
 
         if (response.username) {
-          setUsername(response.username.trim());
+          const cleanedUsername = response.username.trim();
+          setUsername(cleanedUsername);
           setError(null);
+          localStorage.setItem("sayings_username", cleanedUsername)
         }
       } catch (err) {
         console.error("Error:", err);
