@@ -1,13 +1,13 @@
 import { CircleUserRound } from 'lucide-react';
 import { getUsername } from '../../apis/getUsername';
-import { useState, useEffect } from 'react';
+import { useState, useLayoutEffect } from 'react';
 
 const Community = () => {
 
     const [username, setUsername] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const fetchUsername = async () => {
             try {
                 const response = await getUsername();
@@ -36,8 +36,8 @@ const Community = () => {
         <div className="flex flex-col items-center">
             <div className="mt-6 flex flex-col gap-2 bg-[#1D1D1D] px-4 py-4 rounded-2xl w-[800px]">
                 <div className='flex flex-row gap-2 items-center mb-2 opacity-90'>
-                    <CircleUserRound size={28} style={{marginBottom: "2px"}} />
-                    <p className='font-ibm text-md text-white'>{username}</p>
+                    <CircleUserRound size={30} style={{marginBottom: "2px"}} />
+                    <p className='font-ibm text-md text-white text-[17px]'>{username}</p>
                 </div>
                 <input
                     type="text"
