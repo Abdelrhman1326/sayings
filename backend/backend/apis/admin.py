@@ -13,7 +13,7 @@ class QuoteAdmin(admin.ModelAdmin):
 
 @admin.register(CommunityQuote)
 class CommunityQuoteAdmin(admin.ModelAdmin):
-    list_display = ['quote_owner', 'quote_text', 'quote_genre']
+    list_display = ['quote_owner', 'quote_text']
 
 @admin.register(QuoteInfo)
 class QuoteInfoAdmin(admin.ModelAdmin):

@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import SignupView, LoginView, AuthView, LogoutView
-from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView, CommunityQuoteDetailView
+from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView
 from .views import UserEngagementView, LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView, RetrieveUsernameView
 
 urlpatterns = [
@@ -9,8 +9,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('auth/', AuthView.as_view(), name='auth'),
 
-    path('community_quotes/', CommunityQuoteCreateView.as_view(), name='community-quote-create'),
-    path('community_quotes/<int:pk>/', CommunityQuoteDetailView.as_view(), name='community-quote-detail'),
+    path('community_quotes/publish/', CommunityQuoteCreateView.as_view(), name='community-quote-create'),
     path('delete_quote/', DeleteQuoteView.as_view(), name='delete_quote'),
 
     path('users/engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
