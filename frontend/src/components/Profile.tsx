@@ -10,7 +10,7 @@ import QuoteCard from "./subComponents/QuoteCard";
 const Profile = () => {
   const [username, setUsername] = useState<string>("");
   const [barColor, setBarColor] = useState<string>("#D2BCFF");
-  const [textColor, setTextColor] = useState("white");
+  const [textColor, setTextColor] = useState("black");
   const [followers, setFollowers] = useState<number>(0);
   const [following, setFollowing] = useState<number>(0);
   const [name, setName] = useState<string>("...");
