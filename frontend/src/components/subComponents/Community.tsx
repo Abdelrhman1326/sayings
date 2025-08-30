@@ -6,7 +6,6 @@ import { getColor } from "../ui/ProfileIconColor";
 
 const Community = () => {
   const [username, setUsername] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   useLayoutEffect(() => {
     const fetchUsername = async () => {
@@ -19,7 +18,6 @@ const Community = () => {
         const response = await getUsername();
 
         if (response.error) {
-          setError(response.error);
           setUsername("");
           return;
         }
@@ -27,12 +25,10 @@ const Community = () => {
         if (response.username) {
           const cleanedUsername = response.username.trim();
           setUsername(cleanedUsername);
-          setError(null);
           localStorage.setItem("sayings_username", cleanedUsername)
         }
       } catch (err) {
         console.error("Error:", err);
-        setError("Unexpected error while fetching username");
       }
     };
 
