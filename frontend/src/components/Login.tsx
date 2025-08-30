@@ -32,6 +32,12 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // make sure there is no leftover usernames in the local storage:
+      const cashedUsername = localStorage.getItem("sayings_username");
+      if (cashedUsername) {
+        localStorage.removeItem("sayings_username");
+      }
+
       await login(formState);
       toast.success('Login successful');
       navigate('/home');
