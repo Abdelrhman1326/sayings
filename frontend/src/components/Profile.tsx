@@ -84,8 +84,10 @@ const Profile = () => {
   return (
     <>
       <div className="overflow-hidden w-screen">
-        <Header />
-        <div className="flex pl-32 pr-32 mt-12">
+        <div className="fixed top-0 left-0 w-full z-50">
+          <Header />
+        </div>
+        <div className="flex pl-32 pr-32 mt-[140px]">
           {/* exposure bar */}
           <div
             style={{ backgroundColor: `${barColor}`, color: `${textColor}` }}
