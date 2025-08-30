@@ -17,6 +17,7 @@ const Community = () => {
         }
         const response = await getUsername();
 
+      
         if (response.error) {
           setUsername("");
           return;
