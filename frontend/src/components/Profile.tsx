@@ -4,6 +4,7 @@ import { getUsername } from "../apis/getUsername";
 import { useState, useLayoutEffect, useEffect } from "react";
 import { getColor } from "./ui/ProfileIconColor";
 import { getSavedQuotes } from "../apis/getSavedQuotes";
+import { getPublishedQuotes } from "../apis/listPublishedQuotes";
 import { toast } from "react-toastify";
 import QuoteCard from "./subComponents/QuoteCard";
 
@@ -19,8 +20,13 @@ const Profile = () => {
   );
   const [editIconHovered, setEditIconHovered] = useState<boolean>(false);
 
+  // ✅ Saved Quotes state
   const [savedQuotes, setSavedQuotes] = useState<any[]>([]);
 
+  // ✅ Published Quotes state
+  const [publishedQuotes, setPublishedQuotes] = useState<any[]>([]);
+
+  // --- Fetch Saved Quotes
   const handleSetSavedQuotes = async () => {
     try {
       const response = await getSavedQuotes();
@@ -36,23 +42,40 @@ const Profile = () => {
     }
   };
 
-  const handleUnsaveQuote = (id: number | string) => {
-    console.log("Unsave pressed for:", id);
+  // --- Fetch Published Quotes
+  const handleSetPublishedQuotes = async () => {
+    try {
+      const response = await getPublishedQuotes();
+      const data = response.results || response; // DRF sometimes wraps in `results`
+      setPublishedQuotes(data);
+    } catch (error: any) {
+      setPublishedQuotes([]);
+      toast.error(
+        `Error while getting published quotes: ${
+          error?.response?.data?.error || error.message || "Unknown error"
+        }`
+      );
+    }
+  };
 
+  // --- Handle Unsave
+  const handleUnsaveQuote = (id: number | string) => {
     const newSavedQuotes = savedQuotes.filter(
       (quote) => String(quote.id) !== String(id)
     );
-
     setSavedQuotes(newSavedQuotes);
   };
 
+  // ✅ Fetch both on mount
   useEffect(() => {
     handleSetSavedQuotes();
+    handleSetPublishedQuotes();
   }, []);
 
   const tabs = ["Published Quotes", "Saved Quotes"];
   const [activeTab, setActiveTab] = useState("Published Quotes");
 
+  // --- Fetch Username
   useLayoutEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -87,8 +110,9 @@ const Profile = () => {
         <div className="fixed top-0 left-0 w-full z-50">
           <Header />
         </div>
+
+        {/* Exposure Bar */}
         <div className="flex pl-32 pr-32 mt-[140px]">
-          {/* exposure bar */}
           <div
             style={{ backgroundColor: `${barColor}`, color: `${textColor}` }}
             className="flex flex-row items-center p-4 w-full h-40 rounded-full"
@@ -111,35 +135,34 @@ const Profile = () => {
                 <CircleUserRound size={30} style={{ marginBottom: "2px" }} />
               )}
             </div>
-            {/* username */}
+
+            {/* username + info */}
             <div className="flex flex-col ml-6 font-ibm font-bold">
               <h1 className="text-[28px]">{username}</h1>
               <h2>{name}</h2>
               <h3>{`${followers} followers`}</h3>
               <h3>{`${following} following`}</h3>
             </div>
+
             {/* fav quote */}
             <div className="font-ibm font-bold bg-transparent h-[160px] w-[55%] absolute right-32 rounded-full">
               <EditIcon
                 className="absolute right-16 top-8 opacity-50 hover:opacity-100 cursor-pointer"
-                onMouseEnter={() => {
-                  setEditIconHovered(true);
-                }}
-                onMouseLeave={() => {
-                  setEditIconHovered(false);
-                }}
+                onMouseEnter={() => setEditIconHovered(true)}
+                onMouseLeave={() => setEditIconHovered(false)}
               />
-              {editIconHovered ? (
+              {editIconHovered && (
                 <p className="absolute top-8 right-24 underline">
                   Customize your exposure bar
                 </p>
-              ) : null}
+              )}
               <p className="absolute right-16 bottom-10 text-[24px]">
                 {`“${favQuote}”`}
               </p>
             </div>
           </div>
         </div>
+
         {/* Tabs */}
         <div className="flex flex-row justify-center mt-8 gap-4 text-[26px]">
           {tabs.map((tab) => (
@@ -162,7 +185,24 @@ const Profile = () => {
       {/* Published Quotes Tab */}
       {activeTab === "Published Quotes" && (
         <div className="p-8 text-white flex justify-center">
-          <p className="text-lg opacity-70">No published quotes yet.</p>
+          {publishedQuotes.length === 0 ? (
+            <p className="text-lg opacity-70">No published quotes yet.</p>
+          ) : (
+            <div className="flex flex-col gap-4 w-[800px] mb-12">
+              {publishedQuotes.map((quote) => (
+                <QuoteCard
+                  key={quote.id}
+                  id={quote.id}
+                  text={quote.quote_text}
+                  author={username}
+                  likes_count={0}
+                  dislikes_count={0}
+                  source={null}
+                  saved={false}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

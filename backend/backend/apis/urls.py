@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import SignupView, LoginView, AuthView, LogoutView
-from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView
+from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView, RetrievePublishedQuotes, DeleteCommunityQuote
 from .views import UserEngagementView, LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView, RetrieveUsernameView
 
 urlpatterns = [
@@ -10,7 +10,8 @@ urlpatterns = [
     path('auth/', AuthView.as_view(), name='auth'),
 
     path('community_quotes/publish/', CommunityQuoteCreateView.as_view(), name='community-quote-create'),
-    path('delete_quote/', DeleteQuoteView.as_view(), name='delete_quote'),
+    path('community_quotes/published/', RetrievePublishedQuotes.as_view(), name='community-quote-list-published'),
+    path('community_quotes/delete/<int:pk>/', DeleteCommunityQuote.as_view(), name='delete-community-quote'),
 
     path('users/engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
     path('users/username/', RetrieveUsernameView.as_view(), name='retrieve-username'),
@@ -20,6 +21,7 @@ urlpatterns = [
     path('quotes/undo/<str:action>/<int:quote_id>/', UndoQuoteReactionView.as_view(), name='undo-quote-reaction'),
     path('quotes/<int:quote_id>/reaction-status/', QuoteReactionStatusView.as_view(), name='quote-reaction-status'),
     path('quotes/save_quote/<int:quote_id>/', SaveQuoteView.as_view(), name='save_quote'),
+    path('quotes/delete/', DeleteQuoteView.as_view(), name='delete_quote'),
     path('quotes/saved_quotes/', RetrieveSavedQuotesView.as_view(), name='saved_quotes'),
     path('quotes/random_quote/', RandomQuoteView.as_view(), name='random_quote')
 ]

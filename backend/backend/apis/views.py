@@ -342,6 +342,23 @@ class CommunityQuoteCreateView(generics.CreateAPIView, GenericAPIView):
 
     def perform_create(self, serializer):
         serializer.save(quote_owner=self.request.user)
+
+class RetrievePublishedQuotes(generics.ListAPIView):
+    serializer_class = CommunityQuoteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return CommunityQuote.objects.filter(quote_owner=user)
+    
+class DeleteCommunityQuote(generics.DestroyAPIView):
+    serializer_class = CommunityQuoteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        # Ensure the user can only delete their own quotes
+        return CommunityQuote.objects.filter(quote_owner=user)
  
 # Algorithm views
 ###
