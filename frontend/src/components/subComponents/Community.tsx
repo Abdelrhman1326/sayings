@@ -1,6 +1,6 @@
 import { CircleUserRound } from "lucide-react";
 import { getUsername } from "../../apis/getUsername";
-import { useState, useLayoutEffect } from "react";
+import { useState, useLayoutEffect, useEffect } from "react";
 import { getColor } from "../ui/ProfileIconColor";
 import LabelInput from "../subComponents/LabelInput"
 
@@ -41,6 +41,29 @@ const Community = () => {
 
     fetchUsername();
   }, []);
+
+  const cleanText = () => {
+    let cleanedText = text.trim();
+
+    while (
+      cleanedText.startsWith('"') || cleanedText.startsWith("'") ||
+      cleanedText.endsWith('"') || cleanedText.endsWith("'")
+    ) {
+      if (cleanedText.startsWith('"') || cleanedText.startsWith("'")) {
+        cleanedText = cleanedText.slice(1);
+      }
+      if (cleanedText.endsWith('"') || cleanedText.endsWith("'")) {
+        cleanedText = cleanedText.slice(0, -1);
+      }
+      cleanedText = cleanedText.trim();
+    }
+
+    setText(cleanedText);
+  };
+
+  useEffect(() => {
+    cleanText();
+  }, [text]);
 
   return (
     <div className="flex flex-col items-center">
