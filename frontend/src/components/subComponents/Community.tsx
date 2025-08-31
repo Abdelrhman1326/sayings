@@ -1,11 +1,18 @@
 import { CircleUserRound } from "lucide-react";
 import { getUsername } from "../../apis/getUsername";
 import { useState, useLayoutEffect } from "react";
-import LabelInput from "../subComponents/LabelInput"
 import { getColor } from "../ui/ProfileIconColor";
+import LabelInput from "../subComponents/LabelInput"
+
+import { publish } from "../../apis/publishQuote";
+import { toast } from "react-toastify";
+
 
 const Community = () => {
   const [username, setUsername] = useState("");
+  const [labels, setLabels] = useState<string[]>([]);
+  const [text, setText] = useState<string> ("");
+  const [loading, setLoading] = useState(false);
 
   useLayoutEffect(() => {
     const fetchUsername = async () => {
@@ -53,13 +60,42 @@ const Community = () => {
           className="flex bg-transparent outline-none
            text-white placeholder-gray-400 text-lg
             border-b border-gray-600 pb-2"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
         />
 
         {/* Genres input (LabelInput component) */}
-        <LabelInput />
+        <LabelInput labels={labels} setLabels={setLabels} />
 
         {/* Publish button */}
         <button type="button"
+          onClick={async () => {
+            const loadingToast = toast.loading("Publishing quote");
+            try {
+              const response = await publish({ text:text, genres:labels });
+              console.log("Published:", response);
+
+              // Reset text and labels:
+              setText("");
+              setLabels([]);
+              toast.update(loadingToast, {
+                render: "Quote published",
+                type: "success",
+                isLoading: false,
+                autoClose: 3000,
+              })
+            } catch (error) {
+              console.error("Publish failed:", error);
+              toast.update(loadingToast, {
+                render: error?.message || "Error while publishing quote",
+                type: "error",
+                isLoading: false,
+                autoClose: 3000,
+              })
+            } finally {
+              setLoading(false);
+            }
+          }}
          className="mt-4 bg-[#9CA3AF] text-black
           outline-none font-bold px-4 py-2 rounded-2xl text-[20px]
            hover:shadow-md hover:shadow-purple-500/50 transition duration-300 ease-in">

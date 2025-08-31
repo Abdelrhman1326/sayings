@@ -1,11 +1,7 @@
 import { useState, KeyboardEvent } from "react";
 
-interface LabelInputProps {
-  className?: string;
-}
 
-const LabelInput = ({ className = "" }: LabelInputProps) => {
-  const [labels, setLabels] = useState<string[]>([]);
+const LabelInput = ({ className = "",  labels, setLabels }) => {
   const [value, setValue] = useState<string>("");
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
