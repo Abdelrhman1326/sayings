@@ -107,7 +107,7 @@ const Community = () => {
                 isLoading: false,
                 autoClose: 3000,
               })
-            } catch (error) {
+            } catch (error: any) {
               console.error("Publish failed:", error);
               toast.update(loadingToast, {
                 render: error?.message || "Error while publishing quote",
