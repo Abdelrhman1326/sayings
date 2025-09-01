@@ -1,12 +1,23 @@
 import Header from "./Header";
 import { CircleUserRound, EditIcon } from "lucide-react";
 import { getUsername } from "../apis/getUsername";
-import { useState, useLayoutEffect, useEffect } from "react";
+import { useState, useLayoutEffect, useEffect, useRef, useCallback } from "react";
 import { getColor } from "./ui/ProfileIconColor";
 import { getSavedQuotes } from "../apis/getSavedQuotes";
 import { getPublishedQuotes } from "../apis/listPublishedQuotes";
 import { toast } from "react-toastify";
 import QuoteCard from "./subComponents/QuoteCard";
+
+const CHUNK_SIZE = 50;
+
+type Quote = {
+  id?: number;
+  quote_text?: string;
+  quote_author?: string;
+  likes_count?: number | null;
+  dislikes_count?: number | null;
+  quote_source?: string | null;
+};
 
 const Profile = () => {
   const [username, setUsername] = useState<string>("");
@@ -20,60 +31,303 @@ const Profile = () => {
   );
   const [editIconHovered, setEditIconHovered] = useState<boolean>(false);
 
-  const [savedQuotes, setSavedQuotes] = useState<any[]>([]);
+  // ---------------- Published Quotes State ----------------
+  const [publishedQuotes, setPublishedQuotes] = useState<Quote[]>([]);
+  const [publishedHasMore, setPublishedHasMore] = useState(true);
+  const [publishedLatestRemoved, setPublishedLatestRemoved] = useState<number | null>(null);
+  const [publishedPage, _setPublishedPage] = useState(1);
+  const publishedPageRef = useRef(1);
+  const publishedAnchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
 
-  const [publishedQuotes, setPublishedQuotes] = useState<any[]>([]);
+  // ---------------- Saved Quotes State ----------------
+  const [savedQuotes, setSavedQuotes] = useState<Quote[]>([]);
+  const [savedHasMore, setSavedHasMore] = useState(true);
+  const [savedLatestRemoved, setSavedLatestRemoved] = useState<number | null>(null);
+  const [savedPage, _setSavedPage] = useState(1);
+  const savedPageRef = useRef(1);
+  const savedAnchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
 
-  // --- Fetch Saved Quotes
-  const handleSetSavedQuotes = async () => {
-    try {
-      const response = await getSavedQuotes();
-      const data = response.data;
-      setSavedQuotes(data.results || data);
-    } catch (error: any) {
-      setSavedQuotes([]);
-      toast.error(
-        `Error while getting saved quotes: ${
-          error?.response?.data?.error || error.message || "Unknown error"
-        }`
-      );
-    }
-  };
+  // ---------------- Loading / in-flight guards ----------------
+  const [publishedLoading, setPublishedLoading] = useState(false);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const publishedLoadingRef = useRef(false);
+  const savedLoadingRef = useRef(false);
+  const inFlightRef = useRef(new Set<string>());
 
-  // --- Fetch Published Quotes
-  const handleSetPublishedQuotes = async () => {
-    try {
-      const response = await getPublishedQuotes();
-      const data = response.results || response; // DRF sometimes wraps in `results`
-      setPublishedQuotes(data);
-    } catch (error: any) {
-      setPublishedQuotes([]);
-      toast.error(
-        `Error while getting published quotes: ${
-          error?.response?.data?.error || error.message || "Unknown error"
-        }`
-      );
-    }
-  };
+  // ---------------- StrictMode double-mount guard ----------------
+  const didInitRef = useRef<{ published: boolean; saved: boolean }>({
+    published: false,
+    saved: false,
+  });
 
-  // --- Handle Unsave
-  const handleUnsaveQuote = (id: number | string) => {
-    const newSavedQuotes = savedQuotes.filter(
-      (quote) => String(quote.id) !== String(id)
-    );
-    setSavedQuotes(newSavedQuotes);
-  };
-
-  // Fetch both on mount
-  useEffect(() => {
-    handleSetSavedQuotes();
-    handleSetPublishedQuotes();
-  }, []);
-
+  // ---------------- Tabs ----------------
   const tabs = ["Published Quotes", "Saved Quotes"];
   const [activeTab, setActiveTab] = useState("Published Quotes");
 
-  // --- Fetch Username
+  // keep state + refs in sync
+  const setPublishedPage = (updater: number | ((p: number) => number)) => {
+    if (typeof updater === "function") {
+      _setPublishedPage((prev) => {
+        const next = (updater as (p: number) => number)(prev);
+        publishedPageRef.current = next;
+        return next;
+      });
+    } else {
+      _setPublishedPage(updater);
+      publishedPageRef.current = updater;
+    }
+  };
+  const setSavedPage = (updater: number | ((p: number) => number)) => {
+    if (typeof updater === "function") {
+      _setSavedPage((prev) => {
+        const next = (updater as (p: number) => number)(prev);
+        savedPageRef.current = next;
+        return next;
+      });
+    } else {
+      _setSavedPage(updater);
+      savedPageRef.current = updater;
+    }
+  };
+
+  // ---------------- Helpers ----------------
+  const normalizeResponse = (resp: any): Quote[] => {
+    const d = resp?.data ?? resp;
+    if (Array.isArray(d)) return d;
+    if (Array.isArray(d?.results)) return d.results;
+    return [];
+  };
+  const makeInFlightKey = (list: "published" | "saved", page: number, prepend: boolean) =>
+    `${list}:${page}:${prepend ? 1 : 0}`;
+
+  // ---------------- Fetch Published Quotes ----------------
+  const fetchPublishedQuotes = useCallback(
+    async (page: number, prepend = false) => {
+      if (page < 1) return; // hard guard
+
+      const key = makeInFlightKey("published", page, prepend);
+      if (inFlightRef.current.has(key)) return;
+      if (publishedLoadingRef.current && !prepend) return;
+      if (!publishedHasMore && !prepend) return;
+
+      inFlightRef.current.add(key);
+      publishedLoadingRef.current = true;
+      setPublishedLoading(true);
+
+      try {
+        if (prepend && publishedQuotes.length > 0) {
+          const prevFirstId = publishedQuotes[0]?.id ?? null;
+          const el = prevFirstId !== null ? document.getElementById(`published-${prevFirstId}`) : null;
+          publishedAnchorRef.current = {
+            id: prevFirstId ?? null,
+            top: el ? el.getBoundingClientRect().top : 0,
+          };
+        } else {
+          publishedAnchorRef.current = { id: null, top: 0 };
+        }
+
+        const response = await getPublishedQuotes(page, CHUNK_SIZE);
+        const data = normalizeResponse(response);
+
+        if (!data || data.length === 0) {
+          if (!prepend) setPublishedHasMore(false);
+          return;
+        }
+
+        setPublishedQuotes((prev) => {
+          let updated = prepend ? [...data, ...prev] : [...prev, ...data];
+
+          if (!prepend && updated.length > 2 * CHUNK_SIZE) {
+            // we've trimmed the earliest page; record it for potential restore
+            setPublishedLatestRemoved(page - 2);
+            updated = updated.slice(CHUNK_SIZE); // keep last 100
+          }
+          if (prepend && updated.length > 2 * CHUNK_SIZE) {
+            updated = updated.slice(0, 2 * CHUNK_SIZE);
+            setPublishedPage((p) => Math.max(1, p - 1));
+          }
+
+          return updated;
+        });
+
+        if (!prepend) {
+          if (data.length < CHUNK_SIZE) setPublishedHasMore(false);
+          else setPublishedPage((p) => p + 1);
+        } else {
+          // We restored the removed page; don't decrement below 1
+          setPublishedLatestRemoved((p) => (p && p > 1 ? p - 1 : null));
+        }
+      } catch (error: any) {
+        console.error("fetchPublishedQuotes error:", error);
+        toast.error(
+          `Error while fetching published quotes: ${
+            error?.response?.data?.error || error.message || "Unknown error"
+          }`
+        );
+      } finally {
+        inFlightRef.current.delete(key);
+        publishedLoadingRef.current = false;
+        setPublishedLoading(false);
+      }
+    },
+    [publishedHasMore, publishedQuotes]
+  );
+
+  // ---------------- Fetch Saved Quotes ----------------
+  const fetchSavedQuotes = useCallback(
+    async (page: number, prepend = false) => {
+      if (page < 1) return; // hard guard
+
+      const key = makeInFlightKey("saved", page, prepend);
+      if (inFlightRef.current.has(key)) return;
+      if (savedLoadingRef.current && !prepend) return;
+      if (!savedHasMore && !prepend) return;
+
+      inFlightRef.current.add(key);
+      savedLoadingRef.current = true;
+      setSavedLoading(true);
+
+      try {
+        if (prepend && savedQuotes.length > 0) {
+          const prevFirstId = savedQuotes[0]?.id ?? null;
+          const el = prevFirstId !== null ? document.getElementById(`saved-${prevFirstId}`) : null;
+          savedAnchorRef.current = {
+            id: prevFirstId ?? null,
+            top: el ? el.getBoundingClientRect().top : 0,
+          };
+        } else {
+          savedAnchorRef.current = { id: null, top: 0 };
+        }
+
+        const response = await getSavedQuotes(page, CHUNK_SIZE);
+        const data = normalizeResponse(response);
+
+        if (!data || data.length === 0) {
+          if (!prepend) setSavedHasMore(false);
+          return;
+        }
+
+        setSavedQuotes((prev) => {
+          let updated = prepend ? [...data, ...prev] : [...prev, ...data];
+
+          if (!prepend && updated.length > 2 * CHUNK_SIZE) {
+            setSavedLatestRemoved(page - 2);
+            updated = updated.slice(CHUNK_SIZE);
+          }
+          if (prepend && updated.length > 2 * CHUNK_SIZE) {
+            updated = updated.slice(0, 2 * CHUNK_SIZE);
+            setSavedPage((p) => Math.max(1, p - 1));
+          }
+
+          return updated;
+        });
+
+        if (!prepend) {
+          if (data.length < CHUNK_SIZE) setSavedHasMore(false);
+          else setSavedPage((p) => p + 1);
+        } else {
+          // We restored the removed page; don't keep counting down to 0
+          setSavedLatestRemoved((p) => (p && p > 1 ? p - 1 : null));
+        }
+      } catch (error: any) {
+        console.error("fetchSavedQuotes error:", error);
+        toast.error(
+          `Error while fetching saved quotes: ${
+            error?.response?.data?.error || error.message || "Unknown error"
+          }`
+        );
+      } finally {
+        inFlightRef.current.delete(key);
+        savedLoadingRef.current = false;
+        setSavedLoading(false);
+      }
+    },
+    [savedHasMore, savedQuotes]
+  );
+
+  // ---------------- Restore scroll after insert/prepend ----------------
+  useLayoutEffect(() => {
+    const { id, top } = publishedAnchorRef.current;
+    if (id !== null) {
+      const el = document.getElementById(`published-${id}`);
+      if (el) {
+        const newTop = el.getBoundingClientRect().top;
+        const delta = newTop - top;
+        if (delta !== 0) window.scrollBy(0, delta);
+      }
+      publishedAnchorRef.current = { id: null, top: 0 };
+    }
+  }, [publishedQuotes]);
+
+  useLayoutEffect(() => {
+    const { id, top } = savedAnchorRef.current;
+    if (id !== null) {
+      const el = document.getElementById(`saved-${id}`);
+      if (el) {
+        const newTop = el.getBoundingClientRect().top;
+        const delta = newTop - top;
+        if (delta !== 0) window.scrollBy(0, delta);
+      }
+      savedAnchorRef.current = { id: null, top: 0 };
+    }
+  }, [savedQuotes]);
+
+  // ---------------- Scroll Handler (throttled with rAF) ----------------
+  useEffect(() => {
+    const tickingRef = { current: false };
+
+    const onScroll = () => {
+      if (tickingRef.current) return;
+      tickingRef.current = true;
+
+      requestAnimationFrame(() => {
+        const nearBottom =
+          window.scrollY + window.innerHeight >= document.body.offsetHeight - 200;
+        const nearTop = window.scrollY < 200;
+
+        if (activeTab === "Published Quotes") {
+          if (nearBottom && publishedHasMore) {
+            fetchPublishedQuotes(publishedPageRef.current);
+          }
+          if (
+            nearTop &&
+            publishedLatestRemoved !== null &&
+            publishedLatestRemoved >= 1 &&
+            !publishedLoadingRef.current
+          ) {
+            fetchPublishedQuotes(publishedLatestRemoved, true);
+          }
+        } else {
+          if (nearBottom && savedHasMore) {
+            fetchSavedQuotes(savedPageRef.current);
+          }
+          if (
+            nearTop &&
+            savedLatestRemoved !== null &&
+            savedLatestRemoved >= 1 &&
+            !savedLoadingRef.current
+          ) {
+            fetchSavedQuotes(savedLatestRemoved, true);
+          }
+        }
+
+        tickingRef.current = false;
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [
+    activeTab,
+    publishedHasMore,
+    savedHasMore,
+    publishedLatestRemoved,
+    savedLatestRemoved,
+    fetchPublishedQuotes,
+    fetchSavedQuotes,
+  ]);
+
+  // ---------------- Username ----------------
   useLayoutEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -84,24 +338,39 @@ const Profile = () => {
         }
         const response = await getUsername();
 
-        if (response.error) {
+        if (response?.error) {
           setUsername("");
           return;
         }
 
-        if (response.username) {
-          const cleanedUsername = response.username.trim();
+        const usernameFromResp = response?.username ?? response?.data?.username;
+        if (usernameFromResp) {
+          const cleanedUsername = usernameFromResp.trim();
           setUsername(cleanedUsername);
           localStorage.setItem("sayings_username", cleanedUsername);
         }
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error fetching username:", err);
       }
     };
 
     fetchUsername();
   }, []);
 
+  // ---------------- Initial Fetch (StrictMode safe) ----------------
+  useEffect(() => {
+    if (activeTab === "Published Quotes" && !didInitRef.current.published) {
+      didInitRef.current.published = true;
+      fetchPublishedQuotes(1);
+    }
+    if (activeTab === "Saved Quotes" && !didInitRef.current.saved) {
+      didInitRef.current.saved = true;
+      fetchSavedQuotes(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // ---------------- Render ----------------
   return (
     <>
       <div className="overflow-hidden w-screen">
@@ -112,22 +381,23 @@ const Profile = () => {
         {/* Exposure Bar */}
         <div className="flex pl-32 pr-32 mt-[140px]">
           <div
-            style={{ backgroundColor: `${barColor}`, color: `${textColor}` }}
+            style={{ backgroundColor: barColor, color: textColor }}
             className="flex flex-row items-center p-4 w-full h-40 rounded-full"
           >
             {/* profile picture */}
             <div
-              style={{ backgroundColor: `${textColor}` }}
+              style={{ backgroundColor: textColor }}
               className="flex items-center justify-center w-32 h-32 rounded-full text-[46px]"
             >
               {username.trim() !== "" ? (
                 <p
+                  id="profile-initial"
                   style={{
-                    backgroundColor: `${getColor(username[0].toUpperCase())}`,
+                    backgroundColor: getColor(username[0]?.toUpperCase() ?? "G"),
                   }}
-                  className="bg-black w-28 h-28 flex items-center justify-center rounded-full font-ibm font-bold text-[50px]"
+                  className="w-28 h-28 flex items-center justify-center rounded-full font-ibm font-bold text-[50px]"
                 >
-                  {username[0].toUpperCase()}
+                  {username[0]?.toUpperCase() ?? "U"}
                 </p>
               ) : (
                 <CircleUserRound size={30} style={{ marginBottom: "2px" }} />
@@ -150,13 +420,9 @@ const Profile = () => {
                 onMouseLeave={() => setEditIconHovered(false)}
               />
               {editIconHovered && (
-                <p className="absolute top-8 right-24 underline">
-                  Customize your exposure bar
-                </p>
+                <p className="absolute top-8 right-24 underline">Customize your exposure bar</p>
               )}
-              <p className="absolute right-16 bottom-10 text-[24px]">
-                {`“${favQuote}”`}
-              </p>
+              <p className="absolute right-16 bottom-10 text-[24px]">{`“${favQuote}”`}</p>
             </div>
           </div>
         </div>
@@ -167,12 +433,9 @@ const Profile = () => {
             <p
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`py-1 px-5 rounded-full font-ibm font-bold cursor-pointer transition-colors duration-300 
-                ${
-                  activeTab === tab
-                    ? "bg-uiPrimary text-black"
-                    : "bg-transparent text-white"
-                }`}
+              className={`py-1 px-5 rounded-full font-ibm font-bold cursor-pointer transition-colors duration-300 ${
+                activeTab === tab ? "bg-uiPrimary text-black" : "bg-transparent text-white"
+              }`}
             >
               {tab}
             </p>
@@ -180,50 +443,57 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Published Quotes Tab */}
+      {/* Published Quotes */}
       {activeTab === "Published Quotes" && (
         <div className="p-8 text-white flex justify-center">
           {publishedQuotes.length === 0 ? (
             <p className="text-lg opacity-70">No published quotes yet.</p>
           ) : (
             <div className="flex flex-col gap-4 w-[800px] mb-12">
-              {publishedQuotes.map((quote) => (
-                <QuoteCard
-                  key={quote.id}
-                  id={quote.id}
-                  text={quote.quote_text}
-                  author={username}
-                  likes_count={0}
-                  dislikes_count={0}
-                  source={null}
-                  saved={false}
-                />
-              ))}
+              {publishedQuotes.map((quote, idx) => {
+                const id = quote.id ?? idx;
+                return (
+                  <div id={`published-${id}`} key={id}>
+                    <QuoteCard
+                      id={id}
+                      text={quote.quote_text ?? ""}
+                      author={username}
+                      likes_count={quote.likes_count ?? 0}
+                      dislikes_count={quote.dislikes_count ?? 0}
+                      source={quote.quote_source ?? ""}
+                      saved={false}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* Saved Quotes Tab */}
+      {/* Saved Quotes */}
       {activeTab === "Saved Quotes" && (
         <div className="p-8 text-white flex justify-center">
           {savedQuotes.length === 0 ? (
             <p className="text-lg opacity-70">No saved quotes yet.</p>
           ) : (
             <div className="flex flex-col gap-4 w-[800px] mb-12">
-              {savedQuotes.map((quote) => (
-                <QuoteCard
-                  key={quote.id}
-                  id={quote.id}
-                  text={quote.quote_text}
-                  author={quote.quote_author}
-                  likes_count={quote.likes_count}
-                  dislikes_count={quote.dislikes_count}
-                  source={quote.quote_source}
-                  saved={true}
-                  onUnsave={handleUnsaveQuote}
-                />
-              ))}
+              {savedQuotes.map((quote, idx) => {
+                const id = quote.id ?? idx;
+                return (
+                  <div id={`saved-${id}`} key={id}>
+                    <QuoteCard
+                      id={id}
+                      text={quote.quote_text ?? ""}
+                      author={quote.quote_author ?? "Unknown"}
+                      likes_count={quote.likes_count ?? 0}
+                      dislikes_count={quote.dislikes_count ?? 0}
+                      source={quote.quote_source ?? ""}
+                      saved={true}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

@@ -325,13 +325,21 @@ class SaveQuoteView(APIView):
         except Quote.DoesNotExist:
             return Response({"error": "Quote not found"}, status=status.HTTP_404_NOT_FOUND)
         
-class RetrieveSavedQuotesView(ListAPIView):
+
+class RetrieveSavedQuotesView(generics.ListAPIView):
+    """
+    Returns saved quotes for the authenticated user with pagination.
+    Uses the same StandardResultsSetPagination as SearchQuotesView.
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = RandomQuoteSerializer
-    
+    pagination_class = StandardResultsSetPagination
+
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
-        return engagement.saved_quotes.all().select_related("info")
+        # order by newest first; prefetch related info for efficiency
+        return engagement.saved_quotes.all().prefetch_related("info").order_by('-id')
+
 
 ###
 # Community Quotes:
@@ -343,13 +351,21 @@ class CommunityQuoteCreateView(generics.CreateAPIView, GenericAPIView):
     def perform_create(self, serializer):
         serializer.save(quote_owner=self.request.user)
 
+# ---------------- Retrieve Published Quotes (edited to be paginated + ordered)
 class RetrievePublishedQuotes(generics.ListAPIView):
+    """
+    Returns community/published quotes for the authenticated user (their own community quotes),
+    paginated like SearchQuotesView.
+    """
     serializer_class = CommunityQuoteSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         user = self.request.user
-        return CommunityQuote.objects.filter(quote_owner=user)
+        # return user's community quotes, newest-first
+        return CommunityQuote.objects.filter(quote_owner=user).order_by('-id')
+
     
 class DeleteCommunityQuote(generics.DestroyAPIView):
     serializer_class = CommunityQuoteSerializer

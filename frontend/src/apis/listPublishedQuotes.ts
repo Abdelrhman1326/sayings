@@ -1,13 +1,17 @@
 import axios from "axios";
 import { getCookie } from "./cookies";
 
-export const getPublishedQuotes = async () => {
+export const getPublishedQuotes = async (page = 1, limit = 50) => {
     try {
         const csrfToken = getCookie("csrftoken");
 
         const response = await axios.get(
             "/apis/community_quotes/published/",
             {
+                params: {
+                 page: page,
+                 limit: limit,
+                },
                 withCredentials: true,
                 headers: {
                     "Content-Type": "application/json",
