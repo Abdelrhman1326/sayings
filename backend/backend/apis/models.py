@@ -7,6 +7,18 @@ class User(AbstractUser):
     email = models.EmailField()
     password = models.CharField(max_length=128)  # Store hashed password only!
 
+class UserInfo(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="info")
+    following = models.ManyToManyField("self", symmetrical=False, related_name="followers", blank=True)
+
+    @property
+    def followers_count(self):
+        return self.followers.count()
+
+    @property
+    def following_count(self):
+        return self.following.count()
+
 class Quote(models.Model):
     quote_text = models.TextField()
     quote_genre = models.CharField(max_length=100, blank=True, null=True)
