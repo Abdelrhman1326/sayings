@@ -20,10 +20,8 @@ const Profile = () => {
   );
   const [editIconHovered, setEditIconHovered] = useState<boolean>(false);
 
-  // ✅ Saved Quotes state
   const [savedQuotes, setSavedQuotes] = useState<any[]>([]);
 
-  // ✅ Published Quotes state
   const [publishedQuotes, setPublishedQuotes] = useState<any[]>([]);
 
   // --- Fetch Saved Quotes
@@ -66,7 +64,7 @@ const Profile = () => {
     setSavedQuotes(newSavedQuotes);
   };
 
-  // ✅ Fetch both on mount
+  // Fetch both on mount
   useEffect(() => {
     handleSetSavedQuotes();
     handleSetPublishedQuotes();
