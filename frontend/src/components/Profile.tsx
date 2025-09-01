@@ -27,7 +27,7 @@ const Profile = () => {
   const [following, setFollowing] = useState<number>(0);
   const [name, setName] = useState<string>("...");
   const [favQuote, setFavQuote] = useState<string>(
-    "Be a good person, but don’t waste your time trying to prove it."
+    "Be a good person, but don't waste your time trying to prove it."
   );
   const [editIconHovered, setEditIconHovered] = useState<boolean>(false);
 
@@ -138,13 +138,13 @@ const Profile = () => {
           let updated = prepend ? [...data, ...prev] : [...prev, ...data];
 
           if (!prepend && updated.length > 2 * CHUNK_SIZE) {
-            // we've trimmed the earliest page; record it for potential restore
             setPublishedLatestRemoved(page - 2);
-            updated = updated.slice(CHUNK_SIZE); // keep last 100
+            updated = updated.slice(CHUNK_SIZE); // drop from top
           }
-          if (prepend && updated.length > 2 * CHUNK_SIZE) {
-            updated = updated.slice(0, 2 * CHUNK_SIZE);
-            setPublishedPage((p) => Math.max(1, p - 1));
+
+          if (prepend && updated.length > 100) {
+            updated = updated.slice(0, 100); // keep first 100, drop from bottom
+            // DON'T decrement page when removing from bottom during prepend
           }
 
           return updated;
@@ -211,12 +211,14 @@ const Profile = () => {
           let updated = prepend ? [...data, ...prev] : [...prev, ...data];
 
           if (!prepend && updated.length > 2 * CHUNK_SIZE) {
+            // too many from scrolling down → drop from the top
             setSavedLatestRemoved(page - 2);
             updated = updated.slice(CHUNK_SIZE);
           }
-          if (prepend && updated.length > 2 * CHUNK_SIZE) {
-            updated = updated.slice(0, 2 * CHUNK_SIZE);
-            setSavedPage((p) => Math.max(1, p - 1));
+
+          if (prepend && updated.length > 100) {
+            updated = updated.slice(0, 100); // keep first 100, drop from bottom
+            // DON'T decrement page when removing from bottom during prepend
           }
 
           return updated;
@@ -422,7 +424,7 @@ const Profile = () => {
               {editIconHovered && (
                 <p className="absolute top-8 right-24 underline">Customize your exposure bar</p>
               )}
-              <p className="absolute right-16 bottom-10 text-[24px]">{`“${favQuote}”`}</p>
+              <p className="absolute right-16 bottom-10 text-[24px]">{`"${favQuote}"`}</p>
             </div>
           </div>
         </div>
