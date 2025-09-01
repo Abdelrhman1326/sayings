@@ -114,6 +114,9 @@ const Profile = () => {
       publishedLoadingRef.current = true;
       setPublishedLoading(true);
 
+      // Start loading toast
+      const toastId = toast.loading("Loading quotes...", { autoClose: false });
+
       try {
         // Capture anchor position for both prepend and append operations
         if (prepend && publishedQuotes.length > 0) {
@@ -137,6 +140,9 @@ const Profile = () => {
 
         const response = await getPublishedQuotes(page, CHUNK_SIZE);
         const data = normalizeResponse(response);
+
+        // Wait 2 seconds for fake loading
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         if (!data || data.length === 0) {
           if (!prepend) setPublishedHasMore(false);
@@ -179,6 +185,7 @@ const Profile = () => {
         inFlightRef.current.delete(key);
         publishedLoadingRef.current = false;
         setPublishedLoading(false);
+        toast.dismiss(toastId);
       }
     },
     [publishedHasMore, publishedQuotes]
@@ -197,6 +204,9 @@ const Profile = () => {
       inFlightRef.current.add(key);
       savedLoadingRef.current = true;
       setSavedLoading(true);
+
+      // Start loading toast
+      const toastId = toast.loading("Loading quotes...", { autoClose: false });
 
       try {
         // Capture anchor position for both prepend and append operations
@@ -221,6 +231,9 @@ const Profile = () => {
 
         const response = await getSavedQuotes(page, CHUNK_SIZE);
         const data = normalizeResponse(response);
+
+        // Wait 2 seconds for fake loading
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         if (!data || data.length === 0) {
           if (!prepend) setSavedHasMore(false);
@@ -264,6 +277,7 @@ const Profile = () => {
         inFlightRef.current.delete(key);
         savedLoadingRef.current = false;
         setSavedLoading(false);
+        toast.dismiss(toastId);
       }
     },
     [savedHasMore, savedQuotes]
