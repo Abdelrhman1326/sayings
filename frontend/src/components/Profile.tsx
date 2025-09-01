@@ -144,7 +144,9 @@ const Profile = () => {
 
           if (prepend && updated.length > 100) {
             updated = updated.slice(0, 100); // keep first 100, drop from bottom
-            // DON'T decrement page when removing from bottom during prepend
+            // When we drop quotes from bottom, decrement page counter and reset hasMore
+            setPublishedPage((p) => Math.max(1, p - 1));
+            setPublishedHasMore(true);
           }
 
           return updated;
@@ -218,7 +220,9 @@ const Profile = () => {
 
           if (prepend && updated.length > 100) {
             updated = updated.slice(0, 100); // keep first 100, drop from bottom
-            // DON'T decrement page when removing from bottom during prepend
+            // When we drop quotes from bottom, decrement page counter and reset hasMore
+            setSavedPage((p) => Math.max(1, p - 1));
+            setSavedHasMore(true);
           }
 
           return updated;
