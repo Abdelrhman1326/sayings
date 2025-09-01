@@ -36,6 +36,7 @@ const Profile = () => {
   const [publishedHasMore, setPublishedHasMore] = useState(true);
   const [publishedLatestRemoved, setPublishedLatestRemoved] = useState<number | null>(null);
   const [publishedPage, _setPublishedPage] = useState(1);
+  const [publishedStartPage, setPublishedStartPage] = useState(1); // track the first page in memory
   const publishedPageRef = useRef(1);
   const publishedAnchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
 
@@ -44,6 +45,7 @@ const Profile = () => {
   const [savedHasMore, setSavedHasMore] = useState(true);
   const [savedLatestRemoved, setSavedLatestRemoved] = useState<number | null>(null);
   const [savedPage, _setSavedPage] = useState(1);
+  const [savedStartPage, setSavedStartPage] = useState(1); // track the first page in memory
   const savedPageRef = useRef(1);
   const savedAnchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
 
@@ -151,16 +153,26 @@ const Profile = () => {
 
         setPublishedQuotes((prev) => {
           let updated = prepend ? [...data, ...prev] : [...prev, ...data];
+          let quotesRemovedFromBottom = false;
 
           if (!prepend && updated.length > 2 * CHUNK_SIZE) {
             setPublishedLatestRemoved(page - 2);
             updated = updated.slice(CHUNK_SIZE); // drop from top
+            setPublishedStartPage(prev => prev + 1); // first page in memory moved up
           }
 
           if (prepend && updated.length > 100) {
             updated = updated.slice(0, 100); // keep first 100, drop from bottom
-            // When we drop quotes from bottom, decrement page counter and reset hasMore
-            setPublishedPage((p) => Math.max(1, p - 1));
+            quotesRemovedFromBottom = true;
+            setPublishedStartPage(page); // first page in memory is now the prepended page
+          }
+
+          // Only decrement page and reset hasMore if we actually removed quotes from bottom
+          if (prepend && quotesRemovedFromBottom) {
+            // Calculate next page based on start page and current quotes
+            const pagesInMemory = Math.ceil(updated.length / CHUNK_SIZE);
+            const nextPage = page + pagesInMemory; // page is the prepended page number
+            setPublishedPage(nextPage);
             setPublishedHasMore(true);
           }
 
@@ -171,8 +183,10 @@ const Profile = () => {
           if (data.length < CHUNK_SIZE) setPublishedHasMore(false);
           else setPublishedPage((p) => p + 1);
         } else {
-          // We restored the removed page; don't decrement below 1
-          setPublishedLatestRemoved((p) => (p && p > 1 ? p - 1 : null));
+          // We restored the removed page only if we actually prepended a full page
+          if (data.length === CHUNK_SIZE) {
+            setPublishedLatestRemoved((p) => (p && p > 1 ? p - 1 : null));
+          }
         }
       } catch (error: any) {
         console.error("fetchPublishedQuotes error:", error);
@@ -242,17 +256,27 @@ const Profile = () => {
 
         setSavedQuotes((prev) => {
           let updated = prepend ? [...data, ...prev] : [...prev, ...data];
+          let quotesRemovedFromBottom = false;
 
           if (!prepend && updated.length > 2 * CHUNK_SIZE) {
             // too many from scrolling down → drop from the top
             setSavedLatestRemoved(page - 2);
             updated = updated.slice(CHUNK_SIZE);
+            setSavedStartPage(prev => prev + 1); // first page in memory moved up
           }
 
           if (prepend && updated.length > 100) {
             updated = updated.slice(0, 100); // keep first 100, drop from bottom
-            // When we drop quotes from bottom, decrement page counter and reset hasMore
-            setSavedPage((p) => Math.max(1, p - 1));
+            quotesRemovedFromBottom = true;
+            setSavedStartPage(page); // first page in memory is now the prepended page
+          }
+
+          // Only decrement page and reset hasMore if we actually removed quotes from bottom
+          if (prepend && quotesRemovedFromBottom) {
+            // Calculate next page based on start page and current quotes
+            const pagesInMemory = Math.ceil(updated.length / CHUNK_SIZE);
+            const nextPage = page + pagesInMemory; // page is the prepended page number
+            setSavedPage(nextPage);
             setSavedHasMore(true);
           }
 
@@ -263,8 +287,10 @@ const Profile = () => {
           if (data.length < CHUNK_SIZE) setSavedHasMore(false);
           else setSavedPage((p) => p + 1);
         } else {
-          // We restored the removed page; don't keep counting down to 0
-          setSavedLatestRemoved((p) => (p && p > 1 ? p - 1 : null));
+          // We restored the removed page only if we actually prepended a full page
+          if (data.length === CHUNK_SIZE) {
+            setSavedLatestRemoved((p) => (p && p > 1 ? p - 1 : null));
+          }
         }
       } catch (error: any) {
         console.error("fetchSavedQuotes error:", error);
@@ -536,7 +562,6 @@ const Profile = () => {
           )}
         </div>
       )}
-
     </>
   );
 };
