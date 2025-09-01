@@ -115,11 +115,20 @@ const Profile = () => {
       setPublishedLoading(true);
 
       try {
+        // Capture anchor position for both prepend and append operations
         if (prepend && publishedQuotes.length > 0) {
           const prevFirstId = publishedQuotes[0]?.id ?? null;
           const el = prevFirstId !== null ? document.getElementById(`published-${prevFirstId}`) : null;
           publishedAnchorRef.current = {
             id: prevFirstId ?? null,
+            top: el ? el.getBoundingClientRect().top : 0,
+          };
+        } else if (!prepend && publishedQuotes.length > 0) {
+          // For append, capture the last visible item to maintain scroll position
+          const lastId = publishedQuotes[publishedQuotes.length - 1]?.id ?? null;
+          const el = lastId !== null ? document.getElementById(`published-${lastId}`) : null;
+          publishedAnchorRef.current = {
+            id: lastId ?? null,
             top: el ? el.getBoundingClientRect().top : 0,
           };
         } else {
@@ -190,11 +199,20 @@ const Profile = () => {
       setSavedLoading(true);
 
       try {
+        // Capture anchor position for both prepend and append operations
         if (prepend && savedQuotes.length > 0) {
           const prevFirstId = savedQuotes[0]?.id ?? null;
           const el = prevFirstId !== null ? document.getElementById(`saved-${prevFirstId}`) : null;
           savedAnchorRef.current = {
             id: prevFirstId ?? null,
+            top: el ? el.getBoundingClientRect().top : 0,
+          };
+        } else if (!prepend && savedQuotes.length > 0) {
+          // For append, capture the last visible item to maintain scroll position
+          const lastId = savedQuotes[savedQuotes.length - 1]?.id ?? null;
+          const el = lastId !== null ? document.getElementById(`saved-${lastId}`) : null;
+          savedAnchorRef.current = {
+            id: lastId ?? null,
             top: el ? el.getBoundingClientRect().top : 0,
           };
         } else {
@@ -502,7 +520,6 @@ const Profile = () => {
               })}
             </div>
           )}
-          
         </div>
       )}
     </>
