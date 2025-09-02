@@ -1,63 +1,86 @@
 import csv
 from django.core.management.base import BaseCommand, CommandError
-from apis.models import Quote
-from django.db.utils import IntegrityError
+from apis.models import Quote, Genre
 
 class Command(BaseCommand):
-    help = 'Bulk import quotes from a CSV file'
+    help = 'Bulk import quotes from a CSV file and assign a single genre'
 
     def add_arguments(self, parser):
         parser.add_argument('file_path', type=str, help='Path to CSV file')
 
     def handle(self, *args, **options):
         file_path = options['file_path']
-        batch_size = 50_000
-        quotes = []
         total = 0
         skipped = 0
+        batch_size = 20000  # large batch size for performance
 
         try:
             with open(file_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
+
+                buffer = []
                 for row in reader:
-                    author_field = row.get('author') or row.get('Author') or ''
-                    parts = [p.strip() for p in author_field.split(',', 1)]
-                    quote_author = parts[0]
-                    quote_source = parts[1] if len(parts) > 1 else ''
+                    quote_text = (row.get('quote') or row.get('Quote') or '').strip()
+                    if not quote_text:
+                        continue
 
-                    quote = Quote(
-                        quote_text=row.get('quote') or row.get('Quote') or '',
-                        quote_author=quote_author,
-                        quote_genre=row.get('category') or '',
-                        quote_source=quote_source
-                    )
+                    # author
+                    quote_author = (row.get('author') or row.get('Author') or '').strip()
+                    # source
+                    quote_source = (row.get('source') or '').strip()
+                    # genre (theme/tag)
+                    genre_name = (row.get('theme/tag') or '').strip()
 
-                    quotes.append(quote)
+                    buffer.append((quote_text, quote_author, quote_source, genre_name))
 
-                    if len(quotes) >= batch_size:
-                        created = self.bulk_insert(quotes)
-                        total += created
-                        skipped += len(quotes) - created
-                        self.stdout.write(f"Imported {total}, Skipped {skipped}...")
-                        quotes.clear()
+                    if len(buffer) >= batch_size:
+                        imported, skipped_batch = self._insert_quotes(buffer)
+                        total += imported
+                        skipped += skipped_batch
+                        buffer.clear()
+                        self.stdout.write(self.style.NOTICE(
+                            f"Processed {total+skipped} rows so far..."
+                        ))
 
-                if quotes:
-                    created = self.bulk_insert(quotes)
-                    total += created
-                    skipped += len(quotes) - created
+                if buffer:
+                    imported, skipped_batch = self._insert_quotes(buffer)
+                    total += imported
+                    skipped += skipped_batch
 
             self.stdout.write(self.style.SUCCESS(
-                f"Done. Imported {total} quotes. Skipped {skipped} duplicates."
+                f"✅ Done. Imported {total} quotes. Skipped {skipped} duplicates."
             ))
 
         except FileNotFoundError:
             raise CommandError(f"File not found: {file_path}")
 
+    def _insert_quotes(self, rows):
+        imported = 0
+        skipped = 0
 
-    def bulk_insert(self, quotes):
-        try:
-            created = Quote.objects.bulk_create(quotes, ignore_conflicts=True)
-            return len(created)
-        except IntegrityError as e:
-            self.stderr.write(f"IntegrityError during bulk insert: {e}")
-            return 0
+        texts = [q[0] for q in rows]
+        existing = set(
+            Quote.objects.filter(quote_text__in=texts).values_list("quote_text", flat=True)
+        )
+
+        for quote_text, quote_author, quote_source, genre_name in rows:
+            if quote_text in existing:
+                skipped += 1
+                continue
+
+            # Create or get genre
+            genre_obj = None
+            if genre_name:
+                genre_obj, _ = Genre.objects.get_or_create(name=genre_name)
+
+            # Create quote
+            Quote.objects.create(
+                quote_text=quote_text,
+                quote_author=quote_author,
+                quote_source=quote_source,
+                quote_genre=genre_obj
+            )
+
+            imported += 1
+
+        return imported, skipped

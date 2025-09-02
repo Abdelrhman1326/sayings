@@ -2,49 +2,39 @@ import { CircleUserRound } from "lucide-react";
 import { getUsername } from "../../apis/getUsername";
 import { useState, useLayoutEffect, useEffect } from "react";
 import { getColor } from "../ui/ProfileIconColor";
-import LabelInput from "../subComponents/LabelInput"
-
+import LabelInput from "../subComponents/LabelInput";
 import { publish } from "../../apis/publishQuote";
 import { toast } from "react-toastify";
-
 
 const Community = () => {
   const [username, setUsername] = useState("");
   const [labels, setLabels] = useState<string[]>([]);
-  const [text, setText] = useState<string> ("");
+  const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   useLayoutEffect(() => {
     const fetchUsername = async () => {
       try {
         const cachedUsername = localStorage.getItem("sayings_username");
-        if (cachedUsername) { // check if previously cashed
+        if (cachedUsername) {
           setUsername(cachedUsername);
-          return; // Skip api call, data found locally
-        }
-        const response = await getUsername();
-
-        if (response.error) {
-          setUsername("");
           return;
         }
-
+        const response = await getUsername();
         if (response.username) {
           const cleanedUsername = response.username.trim();
           setUsername(cleanedUsername);
-          localStorage.setItem("sayings_username", cleanedUsername)
+          localStorage.setItem("sayings_username", cleanedUsername);
         }
       } catch (err) {
         console.error("Error:", err);
       }
     };
-
     fetchUsername();
   }, []);
 
   const cleanText = () => {
     let cleanedText = text.trim();
-
     while (
       cleanedText.startsWith('"') || cleanedText.startsWith("'") ||
       cleanedText.endsWith('"') || cleanedText.endsWith("'")
@@ -57,7 +47,6 @@ const Community = () => {
       }
       cleanedText = cleanedText.trim();
     }
-
     setText(cleanedText);
   };
 
@@ -70,10 +59,15 @@ const Community = () => {
       <div className="mt-6 flex flex-col gap-2 bg-[#1D1D1D] px-4 py-4 rounded-2xl w-[800px]">
         {/* Username row */}
         <div className="flex flex-row gap-2 items-center mb-2 opacity-90">
-          {username.trim() !== '' ? <div style={{backgroundColor: `${getColor(username[0].toUpperCase())}`}} className="flex w-8 h-8 text-center text-white font-imb justify-center items-center rounded-full"><p>{username[0].toUpperCase()}</p></div> : <CircleUserRound size={30} style={{ marginBottom: "2px" }} />}
-          <p className="font-ibm text-md text-white text-[17px]">
-            {username}
-          </p>
+          {username ? (
+            <div style={{backgroundColor: getColor(username[0].toUpperCase())}}
+                 className="flex w-8 h-8 text-center text-white font-imb justify-center items-center rounded-full">
+              <p>{username[0].toUpperCase()}</p>
+            </div>
+          ) : (
+            <CircleUserRound size={30} style={{ marginBottom: "2px" }} />
+          )}
+          <p className="font-ibm text-md text-white text-[17px]">{username}</p>
         </div>
 
         {/* Post input */}
@@ -81,24 +75,36 @@ const Community = () => {
           type="text"
           placeholder="Impress the world with your words"
           className="flex bg-transparent outline-none
-           text-white placeholder-gray-400 text-lg
-            border-b border-gray-600 pb-2"
+                     text-white placeholder-gray-400 text-lg
+                     border-b border-gray-600 pb-2"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
 
         {/* Genres input (LabelInput component) */}
-        <LabelInput labels={labels} setLabels={setLabels} />
+        <LabelInput labels={labels} setLabels={setLabels} single={true} />
 
         {/* Publish button */}
-        <button type="button"
+        <button
+          type="button"
           onClick={async () => {
+            if (!text.trim()) {
+              toast.error("Quote text cannot be empty");
+              return;
+            }
+            if (labels.length === 0) {
+              toast.error("Please select a genre");
+              return;
+            }
+
+            setLoading(true);
             const loadingToast = toast.loading("Publishing quote");
             try {
-              const response = await publish({ text:text, genres:labels });
+              // Send only the first genre
+              const response = await publish({ text, genre: labels[0] });
               console.log("Published:", response);
 
-              // Reset text and labels:
+              // Reset state
               setText("");
               setLabels([]);
               toast.update(loadingToast, {
@@ -106,7 +112,7 @@ const Community = () => {
                 type: "success",
                 isLoading: false,
                 autoClose: 3000,
-              })
+              });
             } catch (error: any) {
               console.error("Publish failed:", error);
               toast.update(loadingToast, {
@@ -114,14 +120,15 @@ const Community = () => {
                 type: "error",
                 isLoading: false,
                 autoClose: 3000,
-              })
+              });
             } finally {
               setLoading(false);
             }
           }}
-         className="mt-4 bg-[#9CA3AF] text-black
-          outline-none font-bold px-4 py-2 rounded-2xl text-[20px]
-           hover:shadow-md hover:shadow-purple-500/50 transition duration-300 ease-in">
+          className="mt-4 bg-[#9CA3AF] text-black
+                     outline-none font-bold px-4 py-2 rounded-2xl text-[20px]
+                     hover:shadow-md hover:shadow-purple-500/50 transition duration-300 ease-in"
+        >
           Publish
         </button>
       </div>

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getCookie } from "./cookies";
 
-export const publish = async ({ text, genres }: { text: string; genres: string[] }) => {
+export const publish = async ({ text, genre }: { text: string; genre: string }) => {
     try {
         const csrfToken = getCookie("csrftoken");
 
@@ -9,7 +9,7 @@ export const publish = async ({ text, genres }: { text: string; genres: string[]
             "/apis/community_quotes/publish/",
             {
                 quote_text: text,
-                quote_genres: genres,
+                quote_genre: genre,
             },
             {
                 withCredentials: true,
@@ -22,7 +22,6 @@ export const publish = async ({ text, genres }: { text: string; genres: string[]
 
         return response.data;
     } catch (error: any) {
-        // Axios errors have `error.response` with useful info
         if (error.response) {
             throw new Error(
                 error.response.data?.detail ||

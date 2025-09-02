@@ -144,26 +144,26 @@ from rest_framework import serializers
 from .models import CommunityQuote, Genre
 
 class CommunityQuoteSerializer(serializers.ModelSerializer):
-    quote_genres = serializers.ListField(
-        child=serializers.CharField(), write_only=True
-    )
+    # Accept genre name as input
+    quote_genre = serializers.CharField(write_only=True)
 
     class Meta:
         model = CommunityQuote
-        fields = ["id", "quote_text", "quote_genres"]
+        fields = ["id", "quote_text", "quote_genre"]
 
     def create(self, validated_data):
-        genres_data = validated_data.pop("quote_genres", [])
+        genre_name = validated_data.pop("quote_genre", None)
         quote = CommunityQuote.objects.create(**validated_data)
 
-        for genre_name in genres_data:
+        if genre_name:
             genre, _ = Genre.objects.get_or_create(name=genre_name)
-            quote.quote_genres.add(genre)
+            quote.quote_genre = genre
+            quote.save()
 
         return quote
 
     def to_representation(self, instance):
-        """Control how quote_genres is displayed when reading"""
+        """Control how quote_genre is displayed when reading"""
         data = super().to_representation(instance)
-        data["quote_genres"] = [genre.name for genre in instance.quote_genres.all()]
+        data["quote_genre"] = instance.quote_genre.name if instance.quote_genre else None
         return data
