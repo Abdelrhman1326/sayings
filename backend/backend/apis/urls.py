@@ -23,5 +23,5 @@ urlpatterns = [
     path('quotes/save_quote/<int:quote_id>/', SaveQuoteView.as_view(), name='save_quote'),
     path('quotes/delete/', DeleteQuoteView.as_view(), name='delete_quote'),
     path('quotes/saved_quotes/', RetrieveSavedQuotesView.as_view(), name='saved_quotes'),
-    path('quotes/random_quote/', RandomQuoteView.as_view(), name='random_quote')
+    path('quotes/random_quote/', RandomQuoteView.as_view(), name='random_quote'),
 ]
