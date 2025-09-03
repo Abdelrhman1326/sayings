@@ -27,7 +27,7 @@ const LabelInput = ({ className = "",  labels, setLabels }) => {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="py-2 outline-none bg-[#1D1D1D] text-white placeholder-gray-400 text-lg border-b border-gray-600"
+        className="py-2 outline-none bg-[#1D1D1D] text-white placeholder-gray-400 text-lg border-b border-gray-700"
       />
 
       {/* Labels list */}

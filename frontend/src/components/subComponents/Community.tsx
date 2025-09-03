@@ -76,7 +76,7 @@ const Community = () => {
           placeholder="Impress the world with your words"
           className="flex bg-transparent outline-none
                      text-white placeholder-gray-400 text-lg
-                     border-b border-gray-600 pb-2"
+                     border-b border-gray-700 pb-2"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
