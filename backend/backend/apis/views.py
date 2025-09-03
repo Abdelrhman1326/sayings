@@ -266,33 +266,60 @@ class UndoQuoteReactionView(APIView):
     def post(self, request, action, quote_id):
         user = request.user
 
-        # Get the quote safely
+        # Get the quote safely and lock it for update
         try:
-            quote = Quote.objects.get(id=quote_id)
+            quote = Quote.objects.select_for_update().get(id=quote_id)
         except Quote.DoesNotExist:
             return Response({"error": "Quote doesn't exist"}, status=404)
 
-        if action == "like":
-            if not user.engagement.liked_quotes.filter(id=quote_id).exists():
-                return Response({"error": "User has not liked this quote"}, status=404)
-            # undo like
-            user.engagement.liked_quotes.remove(quote)
-            if quote.info.upvotes > 0:
-                quote.info.upvotes -= 1
-                quote.info.save()
-            return Response({"success": "Undo like on quote", "likes_count": quote.info.upvotes, "dislikes_count": quote.info.downvotes}, status=200)
+        with transaction.atomic():
+            if action == "like":
+                if not user.engagement.liked_quotes.filter(id=quote_id).exists():
+                    return Response({"error": "User has not liked this quote"}, status=404)
+                
+                # undo like
+                user.engagement.liked_quotes.remove(quote)
+                if quote.info.upvotes > 0:
+                    quote.info.upvotes -= 1
+                    quote.info.save()
 
-        elif action == "dislike":
-            if not user.engagement.disliked_quotes.filter(id=quote_id).exists():
-                return Response({"error": "User has not disliked this quote"}, status=404)
-            # undo dislike
-            user.engagement.disliked_quotes.remove(quote)
-            if quote.info.downvotes > 0:
-                quote.info.downvotes -= 1
-                quote.info.save()
-            return Response({"success": "Undo dislike on quote", "likes_count": quote.info.upvotes, "dislikes_count": quote.info.downvotes}, status=200)
+                # --- Update user_profile ---
+                update_genre_score(
+                    engagement=user.engagement,
+                    genre_obj=quote.quote_genre,
+                    action="undo_like"
+                )
 
-        return Response({"error": "Unknown action"}, status=400)
+                return Response({
+                    "success": "Undo like on quote",
+                    "likes_count": quote.info.upvotes,
+                    "dislikes_count": quote.info.downvotes
+                }, status=200)
+
+            elif action == "dislike":
+                if not user.engagement.disliked_quotes.filter(id=quote_id).exists():
+                    return Response({"error": "User has not disliked this quote"}, status=404)
+                
+                # undo dislike
+                user.engagement.disliked_quotes.remove(quote)
+                if quote.info.downvotes > 0:
+                    quote.info.downvotes -= 1
+                    quote.info.save()
+
+                # --- Update user_profile ---
+                update_genre_score(
+                    engagement=user.engagement,
+                    genre_obj=quote.quote_genre,
+                    action="undo_dislike"
+                )
+
+                return Response({
+                    "success": "Undo dislike on quote",
+                    "likes_count": quote.info.upvotes,
+                    "dislikes_count": quote.info.downvotes
+                }, status=200)
+
+            return Response({"error": "Unknown action"}, status=400)
 
 class QuoteReactionStatusView(APIView):
     permission_classes = [IsAuthenticated]
@@ -323,10 +350,20 @@ class SaveQuoteView(APIView):
             if engagement.saved_quotes.filter(id=quote_to_save.id).exists():
                 # Already saved → remove (unsave)
                 engagement.saved_quotes.remove(quote_to_save)
+                # --- Update user_profile ---   
+                genre = quote_to_save.quote_genre
+                action = "undo_like"
+                update_genre_score(engagement=engagement, genre_obj=genre, action=action)
+
                 return Response({"message": "Quote unsaved"}, status=status.HTTP_200_OK)
             else:
                 # Not saved yet → save
                 engagement.saved_quotes.add(quote_to_save)
+                # --- Update user_profile ---   
+                genre = quote_to_save.quote_genre
+                action = "undo_like"
+                update_genre_score(engagement=engagement, genre_obj=genre, action=action)
+
                 return Response({"message": "Quote saved"}, status=status.HTTP_200_OK)
 
         except Quote.DoesNotExist:
