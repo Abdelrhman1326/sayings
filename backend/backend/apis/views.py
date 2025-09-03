@@ -15,7 +15,7 @@ from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerialize
 # models:
 from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo
 
-from utils import get_delta, update_genre_score
+from .utils import get_delta, update_genre_score
 
 # Auth/user views:
 ###
