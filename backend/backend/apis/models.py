@@ -67,7 +67,13 @@ class SearchQuery(models.Model):
 
 class UserEngagement(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='engagement')
-    favorite_genres = models.JSONField(default=list, blank=True)
     liked_quotes = models.ManyToManyField(Quote, related_name="liked_by", blank=True)
     disliked_quotes = models.ManyToManyField(Quote, related_name="disliked_by", blank=True)
     saved_quotes = models.ManyToManyField(Quote, related_name="saved_by", blank=True)
+
+    # user_profile will be a dict has each genre and it's score
+    # each like is considers +1 score
+    # each dislike is considered -2 score
+    # each save is considered +3 score
+    # score change "either positive or negative changes" will be called "delta"
+    user_profile = models.JSONField(default=dict)
