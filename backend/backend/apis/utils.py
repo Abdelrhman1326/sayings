@@ -25,3 +25,17 @@ def get_delta(actions: list[str]) -> int:
             delta -= 3
 
     return delta
+
+def update_genre_score(engagement, genre_obj, action):
+    if not genre_obj:
+        return
+
+    # Get the genre name to use as the key in user_profile
+    genre_name = genre_obj.name
+
+    # Calculate the delta for this action
+    delta = get_delta([action])
+
+    # Update the user's score for this genre
+    engagement.user_profile[genre_name] = engagement.user_profile.get(genre_name, 0) + delta
+    engagement.save()

@@ -15,7 +15,7 @@ from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerialize
 # models:
 from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo
 
-from utils import get_delta
+from utils import get_delta, update_genre_score
 
 # Auth/user views:
 ###
@@ -161,7 +161,6 @@ class SearchQuotesView(generics.GenericAPIView):
         serializer = RandomQuoteSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
-
 class DeleteQuoteView(GenericAPIView):
     queryset = Quote.objects.all()
     serializer_class = DeleteQuoteSerializer
@@ -182,13 +181,13 @@ class DeleteQuoteView(GenericAPIView):
 
         quote.delete()
         return Response({"success": f"Quote with id {quote_id} deleted."}, status=status.HTTP_200_OK)
-    
+
 class LikeQuoteView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, quote_id):
         user = request.user
 
-        with transaction.atomic():
+        with transaction.atomic(): # atomic -> all block happens or nothing happens
             try:
                 quote = Quote.objects.select_for_update().get(id=quote_id)
             except Quote.DoesNotExist:
@@ -211,6 +210,12 @@ class LikeQuoteView(APIView):
             quote_info.upvotes += 1
             quote_info.save()
             engagement.liked_quotes.add(quote)
+            
+            # --- Update user_profile ---   
+            engagement = user.engagement
+            genre = quote.quote_genre
+            action = "like"
+            update_genre_score(engagement=engagement, genre_obj=genre, action=action)
 
         return Response({
             "success": "Quote liked",
