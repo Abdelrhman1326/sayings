@@ -15,6 +15,8 @@ from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerialize
 # models:
 from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo
 
+from utils import get_delta
+
 # Auth/user views:
 ###
 class SignupView(APIView):
