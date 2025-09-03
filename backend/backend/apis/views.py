@@ -223,42 +223,48 @@ class LikeQuoteView(APIView):
             "dislikes_count": quote_info.downvotes
         }, status=status.HTTP_200_OK)
 
-    # endpoint to dislike a quote
+# endpoint to dislike a quote
 class DislikeQuoteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, quote_id):
         user = request.user
 
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
+                # Lock the quote row for update
                 quote = Quote.objects.select_for_update().get(id=quote_id)
-            except Quote.DoesNotExist:
-                return Response({"error": "Quote not found"}, status=status.HTTP_404_NOT_FOUND)
+                # Ensure QuoteInfo exists and lock it
+                quote_info, _ = QuoteInfo.objects.select_for_update().get_or_create(quote=quote)
+                engagement, _ = UserEngagement.objects.get_or_create(user=user)
 
-            engagement, _ = UserEngagement.objects.get_or_create(user=user)
-            quote_info, _ = QuoteInfo.objects.get_or_create(quote=quote)
+                # Check if user already disliked
+                if engagement.disliked_quotes.filter(id=quote.id).exists():
+                    return Response({"error": "User already disliked this quote"}, status=400)
 
-            prev_disliked = engagement.disliked_quotes.filter(id=quote.id).exists()
+                # Remove like if previously liked
+                if engagement.liked_quotes.filter(id=quote.id).exists():
+                    engagement.liked_quotes.remove(quote)
+                    if quote_info.upvotes > 0:
+                        quote_info.upvotes -= 1
 
-            if prev_disliked:
-                return Response({"error": "User already disliked this quote"}, status=status.HTTP_400_BAD_REQUEST)
+                # Add dislike
+                quote_info.downvotes += 1
+                quote_info.save()
+                engagement.disliked_quotes.add(quote)
 
-            prev_liked = engagement.liked_quotes.filter(id=quote.id).exists()
-            if prev_liked:
-                engagement.liked_quotes.remove(quote)
-                if quote_info.upvotes > 0:
-                    quote_info.upvotes -= 1
-            
-            quote_info.downvotes += 1
-            quote_info.save()
-            engagement.disliked_quotes.add(quote)
+                # --- Update user profile genre score ---
+                genre = quote.quote_genre
+                update_genre_score(engagement=engagement, genre_obj=genre, action="dislike")
+
+        except Quote.DoesNotExist:
+            return Response({"error": "Quote not found"}, status=404)
 
         return Response({
             "success": "Quote disliked",
             "likes_count": quote_info.upvotes,
             "dislikes_count": quote_info.downvotes
-        }, status=status.HTTP_200_OK)
+        }, status=200)
     
 class UndoQuoteReactionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -342,33 +348,35 @@ class SaveQuoteView(APIView):
 
     def post(self, request, quote_id):
         try:
-            quote_to_save = Quote.objects.get(id=quote_id)
+            with transaction.atomic():
+                # Lock the quote row
+                quote_to_save = Quote.objects.select_for_update().get(id=quote_id)
 
-            # Ensure user has an engagement record
-            engagement, _ = UserEngagement.objects.get_or_create(user=request.user)
+                # Ensure user has an engagement record
+                engagement, _ = UserEngagement.objects.select_for_update().get_or_create(user=request.user)
 
-            if engagement.saved_quotes.filter(id=quote_to_save.id).exists():
-                # Already saved → remove (unsave)
-                engagement.saved_quotes.remove(quote_to_save)
-                # --- Update user_profile ---   
-                genre = quote_to_save.quote_genre
-                action = "undo_like"
-                update_genre_score(engagement=engagement, genre_obj=genre, action=action)
+                if engagement.saved_quotes.filter(id=quote_to_save.id).exists():
+                    # Already saved → remove (unsave)
+                    engagement.saved_quotes.remove(quote_to_save)
 
-                return Response({"message": "Quote unsaved"}, status=status.HTTP_200_OK)
-            else:
-                # Not saved yet → save
-                engagement.saved_quotes.add(quote_to_save)
-                # --- Update user_profile ---   
-                genre = quote_to_save.quote_genre
-                action = "undo_like"
-                update_genre_score(engagement=engagement, genre_obj=genre, action=action)
+                    # --- Update user_profile ---
+                    genre = quote_to_save.quote_genre
+                    update_genre_score(engagement=engagement, genre_obj=genre, action="undo_save")
 
-                return Response({"message": "Quote saved"}, status=status.HTTP_200_OK)
+                    return Response({"message": "Quote unsaved"}, status=200)
+                else:
+                    # Not saved yet → save
+                    engagement.saved_quotes.add(quote_to_save)
+
+                    # --- Update user_profile ---
+                    genre = quote_to_save.quote_genre
+                    update_genre_score(engagement=engagement, genre_obj=genre, action="save")
+
+                    return Response({"message": "Quote saved"}, status=200)
 
         except Quote.DoesNotExist:
-            return Response({"error": "Quote not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({"error": "Quote not found"}, status=404)
+
 
 class RetrieveSavedQuotesView(generics.ListAPIView):
     """
