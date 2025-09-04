@@ -1,7 +1,7 @@
 # utils.py
 
 def get_delta(actions: list[str]) -> int:
-    valid_actions = {"like", "undo_like", "dislike", "undo_dislike", "save", "undo_save"}
+    valid_actions = {"like", "undo_like", "dislike", "undo_dislike", "copy", "save", "undo_save"}
     """
     This function takes an action:
     ("save", "unsave", "like", "undo_like", "dislike", "undo_dislike")
@@ -18,6 +18,8 @@ def get_delta(actions: list[str]) -> int:
         elif action == "dislike":
             delta -= 2
         elif action == "undo_dislike":
+            delta += 2
+        elif action == "copy":
             delta += 2
         elif action == "save":
             delta += 3

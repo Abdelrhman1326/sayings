@@ -384,7 +384,6 @@ class SaveQuoteView(APIView):
         except Quote.DoesNotExist:
             return Response({"error": "Quote not found"}, status=404)
 
-
 class RetrieveSavedQuotesView(generics.ListAPIView):
     """
     Returns saved quotes for the authenticated user with pagination.
@@ -399,6 +398,40 @@ class RetrieveSavedQuotesView(generics.ListAPIView):
         # order by newest first; prefetch related info for efficiency
         return engagement.saved_quotes.all().prefetch_related("info").order_by('-id')
 
+
+class CopyQuoteView(APIView):
+    """
+    This view returns nothing, it should just take a post request with the quote id
+    increment the copy counter of the quote by one and update the engagement of the user
+    then return success response
+    """
+
+    def post(self, request, quote_id):
+        # do actions with atomic "all actions take place or nothing at all"
+        with transaction.atomic():
+            # select quoteinfo for update
+            quote = get_object_or_404(Quote, id=quote_id)
+            # quote is an instance of the model "class" Quote
+            # now try to get the info instance of the quote we found:
+            quote_info, created = QuoteInfo.objects.select_for_update().get_or_create(
+                quote=quote,
+                defaults={"copy_count": 0}
+            )
+
+            # safe update for the counter under previous lock:
+            quote_info.copy_count += 1
+            quote_info.save()
+
+            # now work with the engagement of the user:
+            quote_genre = quote.quote_genre
+            user = request.user
+            user_engagement = user.engagement
+
+            update_genre_score(user_engagement, quote_genre, "copy")
+
+            return Response({
+                "quote_id": quote_id,
+            }) 
 
 ###
 # Community Quotes:
