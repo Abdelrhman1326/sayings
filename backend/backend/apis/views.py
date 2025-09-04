@@ -405,6 +405,7 @@ class CopyQuoteView(APIView):
     increment the copy counter of the quote by one and update the engagement of the user
     then return success response
     """
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, quote_id):
         # do actions with atomic "all actions take place or nothing at all"
