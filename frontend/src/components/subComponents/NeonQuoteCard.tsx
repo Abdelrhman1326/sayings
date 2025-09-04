@@ -6,6 +6,7 @@ import { likeQuote } from "../../apis/likeQuote";
 import { dislikeQuote } from "../../apis/dislikeQuote";
 import { undoReaction } from "../../apis/undoReaction";
 import { saveQuote } from "../../apis/saveQuote";
+import { copyQuote } from "../../apis/copyQuote";
 
 interface QuoteCardProps {
   id: number | string;
@@ -34,10 +35,20 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<boolean>(savedProp);
 
+    const processCopyInBackend = async () => {
+      try {
+        const response = await copyQuote(Number(id));
+        console.log("Copy action processed in the backend:", response);
+      } catch (err: any) {
+        console.error("Error while processing copy action in the backend:", err?.message || err);
+      }
+    };
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       toast.success("Copied to clipboard");
+      await processCopyInBackend();
     } catch {
       toast.error("Failed to copy");
     }
