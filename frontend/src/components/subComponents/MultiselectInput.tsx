@@ -107,10 +107,10 @@ export default function MultiselectInput({
                 filteredOptions.map((option, index) => (
                   <div
                     key={option.value}
-                    className={`px-4 py-3 cursor-pointer text-sm transition-all duration-150 ${
+                    className={`px-4 py-3 font-ibm cursor-pointer text-sm transition-all duration-150 ${
                       selected?.value === option.value
-                        ? "bg-purple-600/20 text-purple-300 border-l-2 border-purple-500"
-                        : "text-gray-300 hover:bg-gray-700/50 hover:text-gray-100"
+                        ? "bg-uiPrimary text-black font-bold"
+                        : "text-gray-300 hover:bg-black hover:bg-opacity-50 hover:text-gray-100"
                     } ${index === filteredOptions.length - 1 ? '' : 'border-b border-gray-700/30'}`}
                     onClick={() => toggleOption(option)}
                   >
