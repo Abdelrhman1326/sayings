@@ -13,7 +13,7 @@ from django.db import transaction
 # serializers:
 from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
 # models:
-from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo
+from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo, Genre
 
 from .utils import get_delta, update_genre_score
 
@@ -502,5 +502,12 @@ class UserEngagementView(APIView):
             "message": f"Genres updated for user {user.username}.",
             "favorite_genres": engagement.favorite_genres
         }, status=200)
+    
 
+class RetrieveQuoteGenres(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        genres = list(Genre.objects.values_list("name", flat=True))
+        return Response(genres)
 ###
