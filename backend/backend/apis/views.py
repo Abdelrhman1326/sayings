@@ -14,7 +14,7 @@ from django.db import transaction
 from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
 # models:
 from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo, Genre
-
+from rest_framework.exceptions import ValidationError
 from .utils import get_delta, update_genre_score
 
 # Auth/user views:
@@ -442,6 +442,11 @@ class CommunityQuoteCreateView(generics.CreateAPIView, GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
+        genre = self.request.data.get("quote_genre")
+        # Validate genre
+        if not Genre.objects.filter(name__iexact=genre).exists():
+            raise ValidationError({"genre": f"Invalid genre: {genre}"})
+
         serializer.save(quote_owner=self.request.user)
 
 # ---------------- Retrieve Published Quotes (edited to be paginated + ordered)
