@@ -206,9 +206,9 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
             </div>
           ))
         ) : query.trim() === "" || resultsCount === null ? (
-          <p className="text-gray-400 text-center mt-4">Search now</p>
+          <p className="flex text-lg opacity-70 justify-center">Search now</p>
         ) : resultsCount === 0 ? (
-          <p className="text-gray-400 text-center mt-4">No results</p>
+          <p className="flex text-lg opacity-70 justify-center">No results</p>
         ) : <></>
       }
       </div>
