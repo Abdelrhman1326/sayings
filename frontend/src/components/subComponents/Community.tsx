@@ -19,19 +19,29 @@ const Community = () => {
   const [loading, setLoading] = useState(false);
   const [genres, setGenres] = useState<Option[]> ([]);
 
-  const getGenres = async () => {
-    try {
-      const responseData = await getQuoteGenres(); // string[]
-      console.log(responseData);
-      const mapped = responseData.map((g: string) => ({
-        value: g.toLowerCase(),
-        label: g,
-      }));
-      setGenres(mapped);
-    } catch (error) {
-      console.error("error while getting genre list", error);
-    }
-  }
+    const getGenres = async () => {
+      try {
+        const responseData = await getQuoteGenres(); // string[]
+        const mapped = responseData.map((g: string) => ({
+          value: g.toLowerCase(),
+          label: g,
+        }));
+
+        // Save to localStorage properly
+        localStorage.setItem("genreslist-cash", JSON.stringify(mapped));
+
+        setGenres(mapped);
+      } catch (error) {
+        console.error("error while getting genre list", error);
+
+        // Load cached genres if they exist
+        const cachedGenres = localStorage.getItem("genreslist-cash");
+        if (cachedGenres) {
+          setGenres(JSON.parse(cachedGenres));
+          console.log("cached genres list used instead");
+        }
+      }
+    };
 
   useEffect(() => {
     getGenres();
