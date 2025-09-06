@@ -25,5 +25,5 @@ urlpatterns = [
     path('quotes/delete/', DeleteQuoteView.as_view(), name='delete_quote'),
     path('quotes/saved_quotes/', RetrieveSavedQuotesView.as_view(), name='saved_quotes'),
     path('quotes/random_quote/', RandomQuoteView.as_view(), name='random_quote'),
-    path('quotes/listgenres', RetrieveQuoteGenres.as_view(), name='list-genres'),
+    path('quotes/listgenres/', RetrieveQuoteGenres.as_view(), name='list-genres'),
 ]

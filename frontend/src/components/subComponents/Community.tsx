@@ -4,6 +4,7 @@ import { useState, useLayoutEffect, useEffect } from "react";
 import { getColor } from "../ui/ProfileIconColor";
 import { publish } from "../../apis/publishQuote";
 import { toast } from "react-toastify";
+import { getQuoteGenres } from "../../apis/listQuoteGenre";
 import MultiselectInput from "../subComponents/MultiselectInput";
 
 type Option = {
@@ -11,19 +12,30 @@ type Option = {
   label: string;
 };
 
-const genres: Option[] = [
-  { value: "inspiration", label: "Inspiration" },
-  { value: "motivation", label: "Motivation" },
-  { value: "life", label: "Life" },
-  { value: "love", label: "Love" },
-  { value: "wisdom", label: "Wisdom" },
-];
-
 const Community = () => {
   const [username, setUsername] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState<Option | null>(null); // Changed from array to single option
+  const [selectedGenre, setSelectedGenre] = useState<Option | null>(null);
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [genres, setGenres] = useState<Option[]> ([]);
+
+  const getGenres = async () => {
+    try {
+      const responseData = await getQuoteGenres(); // string[]
+      console.log(responseData);
+      const mapped = responseData.map((g: string) => ({
+        value: g.toLowerCase(),
+        label: g,
+      }));
+      setGenres(mapped);
+    } catch (error) {
+      console.error("error while getting genre list", error);
+    }
+  }
+
+  useEffect(() => {
+    getGenres();
+  }, []);
 
   useLayoutEffect(() => {
     const fetchUsername = async () => {
