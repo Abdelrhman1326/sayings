@@ -29,7 +29,6 @@ const Community = () => {
 
         // Save to localStorage properly
         localStorage.setItem("genreslist-cash", JSON.stringify(mapped));
-
         setGenres(mapped);
       } catch (error) {
         console.error("error while getting genre list", error);
