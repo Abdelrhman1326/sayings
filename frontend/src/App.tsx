@@ -11,7 +11,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Home from './components/Home';
 import QuoteOfTheDay from './components/QuoteOfTheDay';
-import Feed from './components/Browse';
+import Browse from './components/Browse.tsx';
 import Profile from './components/Profile.tsx';
 import LuckyQuote from './components/LuckyQuote';
 import NotFound from './components/NotFound';
@@ -44,7 +44,7 @@ function App() {
         <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />
         <Route path="/home" element={<Home />} />
         <Route path="/quote-of-the-day" element={<ProtectedRoute><QuoteOfTheDay /></ProtectedRoute>} />
-        <Route path="/browse" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
+        <Route path="/browse" element={<ProtectedRoute><Browse /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/lucky-quote" element={<ProtectedRoute><LuckyQuote /></ProtectedRoute>} />
       </Routes>

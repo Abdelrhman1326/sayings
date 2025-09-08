@@ -4,6 +4,7 @@ import Header from "./Header";
 import { searchQuotes } from "../apis/searchApi";
 import Search from "./subComponents/Search";
 import Community from "./subComponents/Community";
+import Feed from "./subComponents/Feed";
 
 interface Quote {
   id: number;
@@ -14,7 +15,7 @@ interface Quote {
   quote_source: string;
 }
 
-const Feed = () => {
+const Browse = () => {
   const [activeTab, setActiveTab] = useState("Feed");
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [query, setQuery] = useState("");
@@ -43,6 +44,7 @@ const Feed = () => {
       <div className="fixed top-0 left-0 w-full z-50">
         <Header />
       </div>
+
       {/* navigation */}
       <div className="flex flex-col text-white w-full items-center mt-[120px]">
         {/* Tabs */}
@@ -63,20 +65,23 @@ const Feed = () => {
           ))}
         </div>
 
-        {/* Show search bar only if active tab is Search */}
+        {/* Content */}
         {activeTab === "Search" && (
-          <>
-            <Search query={ query } setQuery={ setQuery } handleKeyDown={ handleKeyDown } handleSearchQueries={ handleSearchQueries } quotes={ quotes } />
-          </>
+          <Search
+            query={query}
+            setQuery={setQuery}
+            handleKeyDown={handleKeyDown}
+            handleSearchQueries={handleSearchQueries}
+            quotes={quotes}
+          />
         )}
-        {activeTab === 'Community' && (
-          <>
-            <Community />
-          </>
-        )}
+
+        {activeTab === "Community" && <Community />}
+
+        {activeTab === "Feed" && <Feed />}
       </div>
     </div>
   );
 };
 
-export default Feed;
+export default Browse;

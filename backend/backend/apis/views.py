@@ -432,7 +432,7 @@ class CopyQuoteView(APIView):
 
             return Response({
                 "quote_id": quote_id,
-            }) 
+            })
 
 ###
 # Community Quotes:
@@ -515,4 +515,81 @@ class RetrieveQuoteGenres(APIView):
     def get(self, request):
         genres = list(Genre.objects.values_list("name", flat=True))
         return Response(genres)
+    
+
+from django.utils import timezone
+import math, random
+
+class FeedView(APIView):
+    """
+    Infinite feed endpoint.
+    Uses a scoring system with cursor-based pagination.
+    Cursor = {last_score, last_id}.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        engagement, _ = UserEngagement.objects.get_or_create(user=user)
+
+        # --- Step 1: get pagination params ---
+        limit = int(request.query_params.get("limit", 20))
+        last_score = float(request.query_params.get("last_score", math.inf))
+        last_id = int(request.query_params.get("last_id", 0))
+
+        # --- Step 2: fetch candidate quotes ---
+        candidates = Quote.objects.prefetch_related("info").all()
+
+        # --- Step 3: compute scores ---
+        def compute_score(q):
+            # user genre preference
+            genre_weight = engagement.user_profile.get(q.quote_genre.name, 0) if hasattr(q, "quote_genre") else 0
+
+            # global popularity (upvotes - downvotes)
+            popularity = 0
+            if hasattr(q, "info"):
+                popularity = (q.info.upvotes - q.info.downvotes)
+
+            # recency decay (exponential)
+            age_days = (timezone.now() - q.created_at).days if q.created_at else 0
+            recency = math.exp(-age_days / 7)  # ~1 week half-life
+
+            # small randomness
+            jitter = random.random() * 0.1
+
+            return (
+                0.6 * genre_weight +
+                0.2 * popularity +
+                0.15 * recency +
+                jitter
+            )
+
+        scored = []
+        for q in candidates:
+            s = compute_score(q)
+            # Apply cursor cut (only scores < last_score, or equal but smaller id)
+            if s < last_score or (s == last_score and q.id < last_id):
+                scored.append((s, q))
+
+        # --- Step 4: sort by score desc, then id desc ---
+        scored.sort(key=lambda x: (-x[0], -x[1].id))
+
+        # --- Step 5: paginate ---
+        page_items = scored[:limit]
+        quotes = [q for (_, q) in page_items]
+
+        # --- Step 6: prepare next cursor ---
+        if page_items:
+            next_score, next_quote = page_items[-1]
+            next_cursor = {"last_score": next_score, "last_id": next_quote.id}
+        else:
+            next_cursor = None
+
+        # --- Step 7: serialize + return ---
+        serializer = RandomQuoteSerializer(quotes, many=True)
+        return Response({
+            "results": serializer.data,
+            "next_cursor": next_cursor
+        })
+
 ###

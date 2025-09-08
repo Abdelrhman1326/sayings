@@ -25,6 +25,8 @@ class Genre(models.Model):
     def __str__(self):
         return self.name
 
+from django.utils import timezone
+
 class Quote(models.Model):
     quote_text = models.TextField()
     quote_author = models.CharField(max_length=1000, blank=True, null=True)
@@ -36,6 +38,7 @@ class Quote(models.Model):
         blank=True,
         related_name="quotes"
     )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.quote_text
