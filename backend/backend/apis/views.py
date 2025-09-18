@@ -518,13 +518,15 @@ class RetrieveQuoteGenres(APIView):
     
 
 from django.utils import timezone
-import math, random
+from django.db.models import F, Value, Case, When, FloatField
+from django.db.models.functions import Extract, Exp, Ln, Random
+from django.db import models
+import math
 
 class FeedView(APIView):
     """
-    Infinite feed endpoint.
-    Uses a scoring system with cursor-based pagination.
-    Cursor = {last_score, last_id}.
+    Optimized infinite feed endpoint with database-level scoring.
+    Uses cursor-based pagination with composite scoring.
     """
     permission_classes = [IsAuthenticated]
 
@@ -532,64 +534,103 @@ class FeedView(APIView):
         user = request.user
         engagement, _ = UserEngagement.objects.get_or_create(user=user)
 
-        # --- Step 1: get pagination params ---
+        # --- Step 1: Get pagination params ---
         limit = int(request.query_params.get("limit", 20))
-        last_score = float(request.query_params.get("last_score", math.inf))
-        last_id = int(request.query_params.get("last_id", 0))
-
-        # --- Step 2: fetch candidate quotes ---
-        candidates = Quote.objects.prefetch_related("info").all()
-
-        # --- Step 3: compute scores ---
-        def compute_score(q):
-            # user genre preference
-            genre_weight = engagement.user_profile.get(q.quote_genre.name, 0) if hasattr(q, "quote_genre") else 0
-
-            # global popularity (upvotes - downvotes)
-            popularity = 0
-            if hasattr(q, "info"):
-                popularity = (q.info.upvotes - q.info.downvotes)
-
-            # recency decay (exponential)
-            age_days = (timezone.now() - q.created_at).days if q.created_at else 0
-            recency = math.exp(-age_days / 7)  # ~1 week half-life
-
-            # small randomness
-            jitter = random.random() * 0.1
-
-            return (
-                0.6 * genre_weight +
-                0.2 * popularity +
-                0.15 * recency +
-                jitter
+        limit = min(limit, 100)  # Cap limit for performance
+        
+        cursor_score = request.query_params.get("cursor_score")
+        cursor_id = request.query_params.get("cursor_id")
+        
+        # --- Step 2: Build user genre preferences mapping ---
+        user_genres = engagement.user_profile or {}
+        
+        # Create CASE-WHEN for genre scoring in database
+        genre_cases = []
+        for genre_name, score in user_genres.items():
+            genre_cases.append(
+                When(quote_genre__name=genre_name, then=Value(score))
             )
+        
+        # Default genre score for unmatched genres
+        genre_score_expression = Case(
+            *genre_cases,
+            default=Value(0.0),
+            output_field=FloatField()
+        )
 
-        scored = []
-        for q in candidates:
-            s = compute_score(q)
-            # Apply cursor cut (only scores < last_score, or equal but smaller id)
-            if s < last_score or (s == last_score and q.id < last_id):
-                scored.append((s, q))
+        # --- Step 3: Build the optimized query ---
+        queryset = Quote.objects.select_related('quote_genre').prefetch_related('info')
+        
+        # Add computed score fields
+        queryset = queryset.annotate(
+            # Genre preference score (0.6 weight)
+            genre_weight=genre_score_expression * 0.6,
+            
+            # Popularity score (0.2 weight) - handle null info gracefully
+            popularity_score=Case(
+                When(info__isnull=True, then=Value(0.0)),
+                default=(F('info__upvotes') - F('info__downvotes')) * 0.2,
+                output_field=FloatField()
+            ),
+            
+            # Recency score (0.15 weight) - exponential decay
+            days_old=Extract('created_at', 'epoch') / 86400.0,  # Convert to days
+            current_days=Value(timezone.now().timestamp() / 86400.0),
+            age_in_days=F('current_days') - F('days_old'),
+            recency_score=Case(
+                When(age_in_days__lte=0, then=Value(0.15)),
+                default=0.15 * Exp(-1 * F('age_in_days') / 7.0),
+                output_field=FloatField()
+            ),
+            
+            # Small random component (0.05 weight) - using database random
+            jitter=Random() * 0.05,
+            
+            # Final composite score
+            final_score=F('genre_weight') + F('popularity_score') + F('recency_score') + F('jitter')
+        )
 
-        # --- Step 4: sort by score desc, then id desc ---
-        scored.sort(key=lambda x: (-x[0], -x[1].id))
+        # --- Step 4: Apply cursor-based filtering ---
+        if cursor_score is not None and cursor_id is not None:
+            try:
+                cursor_score = float(cursor_score)
+                cursor_id = int(cursor_id)
+                
+                # Filter: score < cursor_score OR (score = cursor_score AND id < cursor_id)
+                queryset = queryset.filter(
+                    models.Q(final_score__lt=cursor_score) |
+                    models.Q(final_score=cursor_score, id__lt=cursor_id)
+                )
+            except (ValueError, TypeError):
+                # Invalid cursor, start from beginning
+                pass
 
-        # --- Step 5: paginate ---
-        page_items = scored[:limit]
-        quotes = [q for (_, q) in page_items]
+        # --- Step 5: Order and limit ---
+        queryset = queryset.order_by('-final_score', '-id')[:limit + 1]  # +1 to check if more results exist
 
-        # --- Step 6: prepare next cursor ---
-        if page_items:
-            next_score, next_quote = page_items[-1]
-            next_cursor = {"last_score": next_score, "last_id": next_quote.id}
-        else:
-            next_cursor = None
+        # --- Step 6: Execute query and prepare response ---
+        quotes_list = list(queryset)
+        has_more = len(quotes_list) > limit
+        
+        if has_more:
+            quotes_list = quotes_list[:limit]  # Remove the extra item
 
-        # --- Step 7: serialize + return ---
-        serializer = RandomQuoteSerializer(quotes, many=True)
+        # --- Step 7: Prepare next cursor ---
+        next_cursor = None
+        if has_more and quotes_list:
+            last_quote = quotes_list[-1]
+            next_cursor = {
+                "cursor_score": float(last_quote.final_score),
+                "cursor_id": last_quote.id
+            }
+
+        # --- Step 8: Serialize response ---
+        serializer = RandomQuoteSerializer(quotes_list, many=True)
+        
         return Response({
             "results": serializer.data,
-            "next_cursor": next_cursor
+            "next_cursor": next_cursor,
+            "has_more": has_more
         })
 
 ###
