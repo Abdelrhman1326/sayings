@@ -7,7 +7,7 @@ const Home = () => {
   <div className="overflow-x-hidden">
     <Header />
     <HomeBody />
-    <div className="fixed bottom-0 left-0 w-full">
+    <div className="w-full">
       <HomeFooter />
     </div>
   </div>
