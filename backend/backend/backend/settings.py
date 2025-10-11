@@ -112,8 +112,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'sayings_db',
-        'USER': 'sayings_auth_user',
-        'PASSWORD': '5iaF@S@ZfXhOIyM47fuQEd%4YrS9e1',
+        'USER': 'auth_user',
+        'PASSWORD': '132006',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
