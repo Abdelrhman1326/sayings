@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 /* jsMath local font */
 @font-face {
   font-family: 'jsMath-cmbx10';
