@@ -3,7 +3,9 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
-from .models import User, Quote, CommunityQuote, UserEngagement
+from .models import User, Quote, UserEngagement
+from .views import LikeQuoteView
+
 
 # Auth:
 class SignupSerializer(serializers.ModelSerializer):
@@ -119,13 +121,41 @@ class UserEngagementSerializer(serializers.ModelSerializer):
 
 
 # Quotes:
+# Quotes:
 class QuoteSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(source='info.upvotes', read_only=True)
     dislikes_count = serializers.IntegerField(source='info.downvotes', read_only=True)
 
+    user_has_liked = serializers.SerializerMethodField()
+    user_has_disliked = serializers.SerializerMethodField()
+
     class Meta:
         model = Quote
-        fields = ['id', 'quote_text', 'quote_author', 'quote_genre', 'quote_source', 'likes_count', 'dislikes_count']
+        fields = ['id', 'quote_text', 'quote_author', 'quote_genre', 'quote_source',
+                  'likes_count', 'dislikes_count', 'user_has_liked', 'user_has_disliked']
+
+    def get_user_has_liked(self, quote) -> bool:
+        # 1. Fetch the pre-calculated engagement object from the context
+        engagement = self.context.get('user_engagement')
+
+        if engagement:
+            # 2. Optimized Check: Use the engagement object and filter by quote's primary key (pk)
+            # The redundant 'user=user' is also removed.
+            return engagement.liked_quotes.filter(pk=quote.pk).exists()
+
+        # Returns False if the user is not authenticated or engagement is None
+        return False
+
+    def get_user_has_disliked(self, quote) -> bool:
+        # 1. Fetch the pre-calculated engagement object from the context
+        engagement = self.context.get('user_engagement')
+
+        if engagement:
+            # 2. Optimized Check: Use the engagement object and filter by quote's primary key (pk)
+            # The redundant 'user=user' is also removed.
+            return engagement.disliked_quotes.filter(pk=quote.pk).exists()
+
+        return False
 
 class DeleteQuoteSerializer(serializers.Serializer):
     id = serializers.IntegerField()

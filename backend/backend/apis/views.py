@@ -678,5 +678,4 @@ class FeedView(APIView):
             "next_cursor": next_cursor,
             "has_more": has_more
         })
-
 ###
