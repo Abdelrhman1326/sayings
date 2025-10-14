@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db import transaction
 # serializers:
-from .serializers import SignupSerializer, LoginSerializer, RandomQuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
+from .serializers import SignupSerializer, LoginSerializer, QuoteSerializer, DeleteQuoteSerializer, CommunityQuoteSerializer, UserEngagementSerializer
 # models:
 from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo, Genre
 from rest_framework.exceptions import ValidationError
@@ -94,7 +94,7 @@ class RandomQuoteView(APIView):
         if not quote:
             return Response({"error": "No quotes available"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = RandomQuoteSerializer(quote)
+        serializer = QuoteSerializer(quote)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 from .serializers import QuoteSearchSerializer
@@ -107,7 +107,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.permissions import IsAuthenticated
 from .models import Quote
-from .serializers import QuoteSearchSerializer, RandomQuoteSerializer
+from .serializers import QuoteSearchSerializer, QuoteSerializer
 from rest_framework.pagination import PageNumberPagination
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -158,7 +158,7 @@ class SearchQuotesView(generics.GenericAPIView):
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(qs, request, view=self)
 
-        serializer = RandomQuoteSerializer(page, many=True)
+        serializer = QuoteSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
 class DeleteQuoteView(GenericAPIView):
@@ -407,13 +407,42 @@ class RetrieveSavedQuotesView(generics.ListAPIView):
     Uses the same StandardResultsSetPagination as SearchQuotesView.
     """
     permission_classes = [IsAuthenticated]
-    serializer_class = RandomQuoteSerializer
+    serializer_class = QuoteSerializer
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
         # order by newest first; prefetch related info for efficiency
         return engagement.saved_quotes.all().prefetch_related("info").order_by('-id')
+
+class RetrieveLikedQuotesView(generics.ListAPIView):
+    """
+    Returns a list of liked quotes by the user sending the request.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = QuoteSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        # user engagement has a many-to-many field with name (liked_quotes) and related name is (liked_by)
+        # engagement (liked_quotes) >-< users (liked_by)
+
+        # steps to get all quotes of a user:
+        # 1. user = User.Objects.get(id = 1)
+        # 2. engagement = user.engagement
+        # 3. liked_quotes = engagement.liked_quotes
+        engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
+        return engagement.liked_quotes.all().prefetch_related("info").order_by('-id')
+
+
+class RetrieveDisLikedQuotesView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = QuoteSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
+        return engagement.disliked_quotes.all().prefetch_related("info").order_by('-id')
 
 
 class CopyQuoteView(APIView):
@@ -642,7 +671,7 @@ class FeedView(APIView):
             }
 
         # --- Step 8: Serialize response ---
-        serializer = RandomQuoteSerializer(quotes_list, many=True)
+        serializer = QuoteSerializer(quotes_list, many=True)
         
         return Response({
             "results": serializer.data,

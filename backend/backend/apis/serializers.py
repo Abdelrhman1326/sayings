@@ -119,7 +119,7 @@ class UserEngagementSerializer(serializers.ModelSerializer):
 
 
 # Quotes:
-class RandomQuoteSerializer(serializers.ModelSerializer):
+class QuoteSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(source='info.upvotes', read_only=True)
     dislikes_count = serializers.IntegerField(source='info.downvotes', read_only=True)
 
