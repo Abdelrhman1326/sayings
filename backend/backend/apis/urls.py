@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import SignupView, LoginView, AuthView, LogoutView
 from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView, RetrievePublishedQuotes, DeleteCommunityQuote, RetrieveQuoteGenres
-from .views import LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView, RetrieveUsernameView, CopyQuoteView
+from .views import LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView, RetrieveLikedQuotesView, RetrieveDisLikedQuotesView, RetrieveUsernameView, CopyQuoteView
 from .views import FeedView, UserEngagementView
 
 urlpatterns = [
@@ -24,7 +24,11 @@ urlpatterns = [
     path('quotes/save_quote/<int:quote_id>/', SaveQuoteView.as_view(), name='save_quote'),
     path('quotes/copy_quote/<int:quote_id>/', CopyQuoteView.as_view(), name='copy_quote'),
     path('quotes/delete/', DeleteQuoteView.as_view(), name='delete_quote'),
+
     path('quotes/saved_quotes/', RetrieveSavedQuotesView.as_view(), name='saved_quotes'),
+    path('quotes/liked_quotes/', RetrieveLikedQuotesView.as_view(), name="liked_quotes"),
+    path('quotes/disliked_quotes/', RetrieveDisLikedQuotesView.as_view(), name="disliked_quotes"),
+
     path('quotes/random_quote/', RandomQuoteView.as_view(), name='random_quote'),
     path('quotes/listgenres/', RetrieveQuoteGenres.as_view(), name='list-genres'),
 
