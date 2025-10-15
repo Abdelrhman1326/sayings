@@ -103,7 +103,6 @@ class RetrieveUsernameView(APIView):
 ###
 
 # Quotes:
-###
 
 class RandomQuoteView(APIView):
     permission_classes = [IsAuthenticated]
@@ -127,13 +126,50 @@ class RandomQuoteView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 50
     page_size_query_param = 'limit'
     max_page_size = 100
 
+    def paginate_queryset(self, queryset, request, view=None):
+        """
+        Override default behavior to avoid running queryset.count().
+        """
+        self.page_size = self.get_page_size(request)
+        if not self.page_size:
+            return None
 
-# Quotes:
+        # Get the current page number from query params (default = 1)
+        try:
+            self.page_number = int(request.query_params.get(self.page_query_param, 1))
+        except (TypeError, ValueError):
+            self.page_number = 1
+
+        # Calculate start and end slice indexes
+        offset = (self.page_number - 1) * self.page_size
+        limit = offset + self.page_size
+
+        # Slice the queryset manually (no count)
+        self.results = list(queryset[offset:limit])
+        return self.results
+
+    def get_paginated_response(self, data):
+        """
+        Returns response without total count to avoid COUNT() queries.
+        """
+        next_page = self.page_number + 1 if len(self.results) == self.page_size else None
+        prev_page = self.page_number - 1 if self.page_number > 1 else None
+
+        return Response({
+            'next_page': next_page,
+            'previous_page': prev_page,
+            'results': data,
+        })
+
+
 class SearchQuotesView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = QuoteSearchSerializer
@@ -142,69 +178,63 @@ class SearchQuotesView(generics.GenericAPIView):
     def get_queryset(self):
         user = self.request.user
 
-        # Validate and extract query params
+        # --- Validate and extract query params ---
         serializer = self.serializer_class(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         validated = serializer.validated_data
 
-        q = validated.get('q')
-        author_filter = validated.get('af')
-        genre_filter = validated.get('gf', [])
+        q = validated.get("q")
+        author_filter = validated.get("af")
+        genre_filter = validated.get("gf", [])
 
-        # Prefetch base relations
-        qs = Quote.objects.prefetch_related('info', 'quote_genre')
+        # --- Prefetch essential relations only ---
+        qs = Quote.objects.prefetch_related("info", "quote_genre")
 
-        # ---- Annotate liked/disliked flags efficiently ----
-        if user.is_authenticated:
-            engagement, _ = UserEngagement.objects.get_or_create(user=user)
-            liked_ids = list(engagement.liked_quotes.values_list('id', flat=True))
-            disliked_ids = list(engagement.disliked_quotes.values_list('id', flat=True))
-
-            qs = qs.annotate(
-                liked_by_user=Case(
-                    When(id__in=liked_ids, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField(),
-                ),
-                disliked_by_user=Case(
-                    When(id__in=disliked_ids, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField(),
-                ),
-            )
-        else:
-            qs = qs.annotate(
-                liked_by_user=Value(False, output_field=BooleanField()),
-                disliked_by_user=Value(False, output_field=BooleanField()),
-            )
-
-        # ---- Full-text search ----
+        # --- Full-text search (PostgreSQL optimized) ---
         if q:
             search_vector = (
-                SearchVector('quote_text', weight='A') +
-                SearchVector('quote_author', weight='B') +
-                SearchVector('quote_source', weight='D')
+                SearchVector("quote_text", weight="A")
+                + SearchVector("quote_author", weight="B")
+                + SearchVector("quote_source", weight="D")
             )
             search_query = SearchQuery(q)
             qs = (
                 qs.annotate(rank=SearchRank(search_vector, search_query))
-                  .filter(rank__gte=0.1)
-                  .order_by('-rank')
+                .filter(rank__gte=0.1)
+                .order_by("-rank")
             )
 
-        # ---- Filters ----
+        # --- Filters ---
         if author_filter:
             qs = qs.filter(quote_author__icontains=author_filter)
         if genre_filter:
             qs = qs.filter(quote_genre__in=genre_filter)
 
-        return qs.distinct()
+        return qs
 
     def get(self, request, *args, **kwargs):
+        user = request.user
         qs = self.get_queryset()
+
+        # --- Fetch liked/disliked IDs once ---
+        liked_ids = set()
+        disliked_ids = set()
+        if user.is_authenticated:
+            engagement, _ = UserEngagement.objects.get_or_create(user=user)
+            liked_ids = set(engagement.liked_quotes.values_list("id", flat=True))
+            disliked_ids = set(engagement.disliked_quotes.values_list("id", flat=True))
+
+        # --- Pagination ---
         page = self.paginate_queryset(qs)
+
+        # --- Apply flags in memory (O(1) per object) ---
+        for quote in page:
+            quote.liked_by_user = quote.id in liked_ids
+            quote.disliked_by_user = quote.id in disliked_ids
+
         serializer = QuoteSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
+
 
 class DeleteQuoteView(GenericAPIView):
     queryset = Quote.objects.all()
