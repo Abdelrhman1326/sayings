@@ -1,3 +1,5 @@
+from operator import truediv
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView, ListAPIView
@@ -26,7 +28,7 @@ from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
-from django.db.models import F, Value, Case, When, FloatField
+from django.db.models import F, Value, Case, When, FloatField, BooleanField
 from django.db.models.functions import Extract, Exp, Ln
 from django.db import models
 
@@ -131,78 +133,78 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 
+# Quotes:
 class SearchQuotesView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = QuoteSearchSerializer
     pagination_class = StandardResultsSetPagination
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        user = self.request.user
-        user_engagement = None
-        if user.is_authenticated:
-            # Fetch engagement once for the user
-            # Use select_related if User is a ForeignKey, or just get_or_create if its a separate table
-            user_engagement, _ = UserEngagement.objects.get_or_create(user=user)
-        context['user_engagement'] = user_engagement
-        return context
-
-    # --- ALL QUERYSET BUILDING, FILTERING, AND ORDERING IS NOW HERE ---
     def get_queryset(self):
-        request = self.request
+        user = self.request.user
 
-        # Validate query params (REQUIRED for extracting q, af, gf)
-        serializer = self.serializer_class(data=request.query_params)
+        # Validate and extract query params
+        serializer = self.serializer_class(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
+        validated = serializer.validated_data
 
-        q = validated_data.get('q')
-        author_filter = validated_data.get('af')
-        genre_filter = validated_data.get('gf', [])
+        q = validated.get('q')
+        author_filter = validated.get('af')
+        genre_filter = validated.get('gf', [])
 
-        # 'quote_genre' is included here for the full-text search vector and prefetching
-        qs = Quote.objects.prefetch_related('info', 'quote_genre').all()
+        # Prefetch base relations
+        qs = Quote.objects.prefetch_related('info', 'quote_genre')
 
-        # Apply Full-Text Search and Ranking
+        # ---- Annotate liked/disliked flags efficiently ----
+        if user.is_authenticated:
+            engagement, _ = UserEngagement.objects.get_or_create(user=user)
+            liked_ids = list(engagement.liked_quotes.values_list('id', flat=True))
+            disliked_ids = list(engagement.disliked_quotes.values_list('id', flat=True))
+
+            qs = qs.annotate(
+                liked_by_user=Case(
+                    When(id__in=liked_ids, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                ),
+                disliked_by_user=Case(
+                    When(id__in=disliked_ids, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                ),
+            )
+        else:
+            qs = qs.annotate(
+                liked_by_user=Value(False, output_field=BooleanField()),
+                disliked_by_user=Value(False, output_field=BooleanField()),
+            )
+
+        # ---- Full-text search ----
         if q:
             search_vector = (
-                    SearchVector('quote_text', weight='A') +
-                    SearchVector('quote_author', weight='B') +
-                    SearchVector('quote_source', weight='D')
+                SearchVector('quote_text', weight='A') +
+                SearchVector('quote_author', weight='B') +
+                SearchVector('quote_source', weight='D')
             )
             search_query = SearchQuery(q)
-            qs = qs.annotate(
-                rank=SearchRank(search_vector, search_query)
-            ).filter(rank__gte=0.1).order_by('-rank')
+            qs = (
+                qs.annotate(rank=SearchRank(search_vector, search_query))
+                  .filter(rank__gte=0.1)
+                  .order_by('-rank')
+            )
 
-        # Apply explicit filters
+        # ---- Filters ----
         if author_filter:
             qs = qs.filter(quote_author__icontains=author_filter)
-
         if genre_filter:
             qs = qs.filter(quote_genre__in=genre_filter)
 
-        # Apply Distinct (if truly needed, see performance notes)
-        qs = qs.distinct()
+        return qs.distinct()
 
-        # Return the finalized QuerySet
-        return qs
-
-    # --- MINIMAL GET METHOD (Relies on DRF Hooks) ---
     def get(self, request, *args, **kwargs):
-        # 1. Get the filtered QuerySet (Calls self.get_queryset())
         qs = self.get_queryset()
-
-        # 2. Apply pagination (applies LIMIT/OFFSET to the database query)
         page = self.paginate_queryset(qs)
-
-        # 3. Serialize the page results
-        context = self.get_serializer_context()
-        serializer = QuoteSerializer(page, many=True, context=context)
-
-        # 4. Return the paginated response
+        serializer = QuoteSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
-
 
 class DeleteQuoteView(GenericAPIView):
     queryset = Quote.objects.all()
