@@ -10,8 +10,8 @@ interface Quote {
   likes_count: number | null;
   dislikes_count: number | null;
   quote_source: string;
-  user_has_liked: boolean;
-  user_has_disliked: boolean;
+  liked_by_user: boolean;
+  disliked_by_user: boolean;
 }
 
 interface SearchProps {
@@ -204,8 +204,8 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
                 likes_count={quote.likes_count}
                 dislikes_count={quote.dislikes_count}
                 source={quote.quote_source}
-                liked_by_user={quote.user_has_liked}
-                disliked_by_user={quote.user_has_disliked}
+                liked_by_user={quote.liked_by_user}
+                disliked_by_user={quote.disliked_by_user}
               />
             </div>
           ))
