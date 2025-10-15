@@ -10,6 +10,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db import transaction
+from yaml import serialize
+
 # serializers:
 from .serializers import SignupSerializer, LoginSerializer, QuoteSerializer, DeleteQuoteSerializer, \
     CommunityQuoteSerializer, UserEngagementSerializer
@@ -133,24 +135,24 @@ class SearchQuotesView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = QuoteSearchSerializer
     pagination_class = StandardResultsSetPagination
-    queryset = Quote.objects.all()
 
-    # --- EDITED: Add get_serializer_context for efficiency ---
     def get_serializer_context(self):
         context = super().get_serializer_context()
         user = self.request.user
         user_engagement = None
         if user.is_authenticated:
             # Fetch engagement once for the user
+            # Use select_related if User is a ForeignKey, or just get_or_create if its a separate table
             user_engagement, _ = UserEngagement.objects.get_or_create(user=user)
         context['user_engagement'] = user_engagement
         return context
 
-    # -----------------------------------------------------------
+    # --- ALL QUERYSET BUILDING, FILTERING, AND ORDERING IS NOW HERE ---
+    def get_queryset(self):
+        request = self.request
 
-    def get(self, request):
-        # validate query params
-        serializer = self.get_serializer(data=request.query_params)
+        # Validate query params (REQUIRED for extracting q, af, gf)
+        serializer = self.serializer_class(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
@@ -158,14 +160,14 @@ class SearchQuotesView(generics.GenericAPIView):
         author_filter = validated_data.get('af')
         genre_filter = validated_data.get('gf', [])
 
-        qs = Quote.objects.prefetch_related('info').all()
+        # 'quote_genre' is included here for the full-text search vector and prefetching
+        qs = Quote.objects.prefetch_related('info', 'quote_genre').all()
 
-        # PostgreSQL full-text search
+        # Apply Full-Text Search and Ranking
         if q:
             search_vector = (
                     SearchVector('quote_text', weight='A') +
                     SearchVector('quote_author', weight='B') +
-                    SearchVector('quote_genre', weight='C') +
                     SearchVector('quote_source', weight='D')
             )
             search_query = SearchQuery(q)
@@ -173,21 +175,33 @@ class SearchQuotesView(generics.GenericAPIView):
                 rank=SearchRank(search_vector, search_query)
             ).filter(rank__gte=0.1).order_by('-rank')
 
+        # Apply explicit filters
         if author_filter:
             qs = qs.filter(quote_author__icontains=author_filter)
 
         if genre_filter:
             qs = qs.filter(quote_genre__in=genre_filter)
 
+        # Apply Distinct (if truly needed, see performance notes)
         qs = qs.distinct()
 
-        # Apply pagination
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(qs, request, view=self)
+        # Return the finalized QuerySet
+        return qs
 
-        # Use the context method
-        serializer = QuoteSerializer(page, many=True, context=self.get_serializer_context())
-        return paginator.get_paginated_response(serializer.data)
+    # --- MINIMAL GET METHOD (Relies on DRF Hooks) ---
+    def get(self, request, *args, **kwargs):
+        # 1. Get the filtered QuerySet (Calls self.get_queryset())
+        qs = self.get_queryset()
+
+        # 2. Apply pagination (applies LIMIT/OFFSET to the database query)
+        page = self.paginate_queryset(qs)
+
+        # 3. Serialize the page results
+        context = self.get_serializer_context()
+        serializer = QuoteSerializer(page, many=True, context=context)
+
+        # 4. Return the paginated response
+        return self.get_paginated_response(serializer.data)
 
 
 class DeleteQuoteView(GenericAPIView):
