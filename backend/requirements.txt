@@ -8,3 +8,4 @@ PyYAML==6.0.2
 rpds-py==0.26.0
 tzdata==2025.2
 django-cors-headers==4.6.0
+django-silk==5.4.3

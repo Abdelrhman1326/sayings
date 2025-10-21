@@ -513,7 +513,6 @@ class RetrieveLikedQuotesView(BaseQuoteListView):
     """
     Returns a list of liked quotes by the user sending the request.
     """
-
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
         return engagement.liked_quotes.all().prefetch_related("info").order_by('-id')
