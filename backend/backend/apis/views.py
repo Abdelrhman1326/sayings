@@ -170,8 +170,6 @@ class StandardResultsSetPagination(PageNumberPagination):
         })
 
 
-from operator import truediv
-
 from rest_framework.views import APIView
 # ... (other imports)
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
@@ -181,7 +179,6 @@ from django.utils import timezone
 from django.db.models import F, Value, Case, When, FloatField, BooleanField
 from django.db.models.functions import Extract, Exp, Ln
 from django.db import models
-
 
 
 class SearchQuotesView(ListAPIView):
