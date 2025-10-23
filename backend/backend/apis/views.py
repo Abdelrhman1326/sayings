@@ -183,14 +183,12 @@ from django.db.models.functions import Extract, Exp, Ln
 from django.db import models
 
 
-# ... (rest of the file content - assuming StandardResultsSetPagination class is here)
-# ...
 
 class SearchQuotesView(ListAPIView):
     """
     Optimized search for quotes.
     Avoids recomputing SearchVector dynamically.
-    Filters liked/disliked quotes only within the visible page.
+    Filters liked/disliked/saved quotes only within the visible page.
     Selects only necessary fields for speed.
     """
     serializer_class = QuoteSerializer
@@ -200,7 +198,6 @@ class SearchQuotesView(ListAPIView):
     def get_queryset(self):
         query = self.request.query_params.get("q", "").strip()
 
-        # Use pre-indexed search_vector for fast lookup (GIN index)
         qs = (
             Quote.objects
             .prefetch_related("info", "quote_genre")
@@ -245,15 +242,13 @@ class SearchQuotesView(ListAPIView):
                 .values_list("id", flat=True)
             )
 
-        serializer = self.get_serializer(
-            quotes, many=True,
-            context={
-                "liked_ids": liked_ids,
-                "disliked_ids": disliked_ids,
-                "saved_ids": saved_ids
-            }
-        )
+        for q in quotes:
+            q.liked_by_user = q.id in liked_ids
+            q.disliked_by_user = q.id in disliked_ids
+            q.saved_by_user = q.id in saved_ids  # Optional
 
+        # Serialize with the injected flags
+        serializer = self.get_serializer(quotes, many=True)
         return self.get_paginated_response(serializer.data)
 
 
