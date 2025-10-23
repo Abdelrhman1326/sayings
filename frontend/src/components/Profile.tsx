@@ -63,7 +63,7 @@ const Profile = () => {
   });
 
   // ---------------- Tabs ----------------
-  const tabs = ["Published Quotes", "Saved Quotes"];
+  const tabs = ["Published Quotes", "Saved Quotes", "Liked", "Disliked"];
   const [activeTab, setActiveTab] = useState("Published Quotes");
 
   // keep state + refs in sync
