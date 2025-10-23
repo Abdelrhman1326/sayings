@@ -27,21 +27,19 @@ class Genre(models.Model):
 
 from django.utils import timezone
 
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
+
 class Quote(models.Model):
     quote_text = models.TextField()
     quote_author = models.CharField(max_length=1000, blank=True, null=True)
     quote_source = models.CharField(max_length=1000, blank=True, null=True)
-    quote_genre = models.ForeignKey(
-        Genre,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="quotes"
-    )
+    quote_genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True, blank=True, related_name="quotes")
     created_at = models.DateTimeField(auto_now_add=True)
+    search_vector = SearchVectorField(null=True, blank=True)
 
-    def __str__(self):
-        return self.quote_text
+    class Meta:
+        indexes = [GinIndex(fields=["search_vector"])]
 
 class QuoteInfo(models.Model):
     quote = models.OneToOneField(Quote, on_delete=models.CASCADE, related_name="info")

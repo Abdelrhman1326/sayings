@@ -170,69 +170,90 @@ class StandardResultsSetPagination(PageNumberPagination):
         })
 
 
-class SearchQuotesView(generics.GenericAPIView):
+from operator import truediv
+
+from rest_framework.views import APIView
+# ... (other imports)
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.pagination import PageNumberPagination
+from django.utils import timezone
+from django.db.models import F, Value, Case, When, FloatField, BooleanField
+from django.db.models.functions import Extract, Exp, Ln
+from django.db import models
+
+
+# ... (rest of the file content - assuming StandardResultsSetPagination class is here)
+# ...
+
+class SearchQuotesView(ListAPIView):
+    """
+    Optimized search for quotes.
+    Avoids recomputing SearchVector dynamically.
+    Filters liked/disliked quotes only within the visible page.
+    Selects only necessary fields for speed.
+    """
+    serializer_class = QuoteSerializer
     permission_classes = [IsAuthenticated]
-    serializer_class = QuoteSearchSerializer
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        user = self.request.user
+        query = self.request.query_params.get("q", "").strip()
 
-        # --- Validate and extract query params ---
-        serializer = self.serializer_class(data=self.request.query_params)
-        serializer.is_valid(raise_exception=True)
-        validated = serializer.validated_data
-
-        q = validated.get("q")
-        author_filter = validated.get("af")
-        genre_filter = validated.get("gf", [])
-
-        # --- Prefetch essential relations only ---
-        qs = Quote.objects.prefetch_related("info", "quote_genre")
-
-        # --- Full-text search (PostgreSQL optimized) ---
-        if q:
-            search_vector = (
-                SearchVector("quote_text", weight="A")
-                + SearchVector("quote_author", weight="B")
-                + SearchVector("quote_source", weight="D")
+        # Use pre-indexed search_vector for fast lookup (GIN index)
+        qs = (
+            Quote.objects
+            .prefetch_related("info", "quote_genre")
+            .only(
+                "id", "quote_text", "quote_author",
+                "quote_source", "quote_genre_id"
             )
-            search_query = SearchQuery(q)
-            qs = (
-                qs.annotate(rank=SearchRank(search_vector, search_query))
-                .filter(rank__gte=0.1)
-                .order_by("-rank")
-            )
+            .order_by("-id")
+        )
 
-        # --- Filters ---
-        if author_filter:
-            qs = qs.filter(quote_author__icontains=author_filter)
-        if genre_filter:
-            qs = qs.filter(quote_genre__in=genre_filter)
+        if query:
+            qs = qs.filter(search_vector=SearchQuery(query))
 
         return qs
 
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        qs = self.get_queryset()
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
 
-        # --- Fetch liked/disliked IDs once ---
-        liked_ids = set()
-        disliked_ids = set()
-        if user.is_authenticated:
-            engagement, _ = UserEngagement.objects.get_or_create(user=user)
-            liked_ids = set(engagement.liked_quotes.values_list("id", flat=True))
-            disliked_ids = set(engagement.disliked_quotes.values_list("id", flat=True))
+        # Pagination (Django handles slicing efficiently)
+        page = self.paginate_queryset(queryset)
+        if page is None:
+            return Response({"results": []})
 
-        # --- Pagination ---
-        page = self.paginate_queryset(qs)
+        quotes = list(page)
 
-        # --- Apply flags in memory (O(1) per object) ---
-        for quote in page:
-            quote.liked_by_user = quote.id in liked_ids
-            quote.disliked_by_user = quote.id in disliked_ids
+        # Engagement optimization
+        user_engagement = getattr(request.user, "engagement", None)
+        liked_ids, disliked_ids, saved_ids = set(), set(), set()
 
-        serializer = QuoteSerializer(page, many=True)
+        if user_engagement:
+            visible_ids = [q.id for q in quotes]
+            liked_ids = set(
+                user_engagement.liked_quotes.filter(id__in=visible_ids)
+                .values_list("id", flat=True)
+            )
+            disliked_ids = set(
+                user_engagement.disliked_quotes.filter(id__in=visible_ids)
+                .values_list("id", flat=True)
+            )
+            saved_ids = set(
+                user_engagement.saved_quotes.filter(id__in=visible_ids)
+                .values_list("id", flat=True)
+            )
+
+        serializer = self.get_serializer(
+            quotes, many=True,
+            context={
+                "liked_ids": liked_ids,
+                "disliked_ids": disliked_ids,
+                "saved_ids": saved_ids
+            }
+        )
+
         return self.get_paginated_response(serializer.data)
 
 
@@ -479,7 +500,6 @@ class SaveQuoteView(APIView):
             return Response({"error": "Quote not found"}, status=404)
 
 
-# --- EDITED: Added get_serializer_context to all ListAPIViews using QuoteSerializer ---
 class BaseQuoteListView(generics.ListAPIView):
     """Base class to add context pre-fetching for all QuoteSerializer lists."""
     permission_classes = [IsAuthenticated]
@@ -527,8 +547,6 @@ class RetrieveDisLikedQuotesView(BaseQuoteListView):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
         return engagement.disliked_quotes.all().prefetch_related("info").order_by('-id')
 
-
-# ----------------------------------------------------------------------------------
 
 class CopyQuoteView(APIView):
     """
