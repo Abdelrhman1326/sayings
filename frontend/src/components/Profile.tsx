@@ -30,9 +30,6 @@ const Profile = () => {
     const [followers, setFollowers] = useState<number>(0);
     const [following, setFollowing] = useState<number>(0);
     const [name, setName] = useState<string>("...");
-    const [favQuote, setFavQuote] = useState<string>(
-        "Be a good person, but don't waste your time trying to prove it."
-    );
     const [editIconHovered, setEditIconHovered] = useState<boolean>(false);
 
     // ---------------- Published Quotes State ----------------
@@ -467,8 +464,7 @@ const Profile = () => {
                 {/* Exposure Bar */}
                 <div className="flex pl-32 pr-32 mt-[140px]">
                     <div
-                        style={{ backgroundColor: barColor, color: textColor }}
-                        className="flex flex-row items-center p-4 w-full h-40 rounded-full"
+                        className="flex flex-row items-center p-4 w-full h-40 rounded-full text-black bg-gradient-to-r from-uiPrimary via-violet-400 to-violet-500"
                     >
                         {/* profile picture */}
                         <div
@@ -496,19 +492,6 @@ const Profile = () => {
                             <h2>{name}</h2>
                             <h3>{`${followers} followers`}</h3>
                             <h3>{`${following} following`}</h3>
-                        </div>
-
-                        {/* fav quote */}
-                        <div className="font-ibm font-bold bg-transparent h-[160px] w-[55%] absolute right-32 rounded-full">
-                            <EditIcon
-                                className="absolute right-16 top-8 opacity-50 hover:opacity-100 cursor-pointer"
-                                onMouseEnter={() => setEditIconHovered(true)}
-                                onMouseLeave={() => setEditIconHovered(false)}
-                            />
-                            {editIconHovered && (
-                                <p className="absolute top-8 right-24 underline">Customize your exposure bar</p>
-                            )}
-                            <p className="absolute right-16 bottom-10 text-[24px]">{`"${favQuote}"`}</p>
                         </div>
                     </div>
                 </div>
