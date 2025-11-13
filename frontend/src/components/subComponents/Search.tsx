@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import QuoteCard from "./QuoteCard";
-import { toast } from "react-toastify";
 import { searchQuotes } from "../../apis/searchApi";
 
 interface Quote {
@@ -43,7 +42,6 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
 
         setLoading(true);
         console.log(`Loading quotes... (page ${pageNumber})`);
-        const toastId = toast.loading("Loading quotes...", { autoClose: false });
 
         try {
             // Capture viewport anchor for smooth scroll when prepending
@@ -109,10 +107,8 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
 
         } catch (err) {
             console.error(err);
-            toast.error("Failed to load quotes");
         } finally {
             setLoading(false);
-            toast.dismiss(toastId);
         }
     };
 
