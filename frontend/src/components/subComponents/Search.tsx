@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import QuoteCard from "./QuoteCard";
 import { searchQuotes } from "../../apis/searchApi";
 
@@ -34,13 +34,15 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
     const removedTopPages = useRef<number[]>([]);
     const removedBottomPages = useRef<number[]>([]);
     const fetchingPages = useRef<Set<number>>(new Set());
+    // anchorRef is no longer used for measurement, but kept if you want to log it later
     const anchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
 
     const startPage = pageOrderRef.current[0] ?? null;
     const endPage = pageOrderRef.current[pageOrderRef.current.length - 1] ?? null;
 
-    // Rebuild quotes with anchor preservation
+    // Rebuild quotes and manage the sliding window trim
     const rebuildQuotes = useCallback((direction?: "up" | "down") => {
+        // 1. Rebuild the list from the pages in memory (pagesRef)
         const ordered = pageOrderRef.current.slice().sort((a, b) => a - b);
         let all: Quote[] = [];
         for (const p of ordered) {
@@ -48,41 +50,43 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
             if (arr && arr.length) all = all.concat(arr);
         }
 
-        // Preserve scroll anchor if prepending
-        let anchorDelta = 0;
-        if (direction === "up" && anchorRef.current.id !== null) {
-            const el = document.getElementById(`quote-${anchorRef.current.id}`);
-            if (el) {
-                anchorDelta = el.getBoundingClientRect().top - anchorRef.current.top;
-            }
-        }
-
-        // Maintain MAX_QUOTES sliding window
+        // 2. Maintain MAX_QUOTES sliding window
         while (all.length > MAX_QUOTES) {
             if (direction === "up") {
-                // Remove from bottom
-                const bottomPage = ordered[ordered.length - 1];
+                // If prepending, remove from the bottom
+                const bottomPage = ordered.pop();
+                if (!bottomPage) break;
+
                 removedBottomPages.current.push(bottomPage);
                 const removed = pagesRef.current.get(bottomPage) ?? [];
                 all = all.slice(0, all.length - removed.length);
-                ordered.pop();
+
+                pagesRef.current.delete(bottomPage);
+
             } else {
-                // Remove from top
-                const topPage = ordered[0];
+                // If appending (or initial load), remove from the top
+                const topPage = ordered.shift();
+                if (!topPage) break;
+
                 removedTopPages.current.push(topPage);
                 const removed = pagesRef.current.get(topPage) ?? [];
                 all = all.slice(removed.length);
-                ordered.shift();
+
+                pagesRef.current.delete(topPage);
             }
         }
 
         pageOrderRef.current = ordered;
         setQuotes(all);
 
-        // Restore scroll position if prepending
-        if (direction === "up" && anchorDelta !== 0) {
-            window.scrollBy(0, anchorDelta);
-            anchorRef.current = { id: null, top: 0 };
+        // 3. Simple Scroll Adjustment (The new, simpler approach)
+        if (direction === "up") {
+            // Wait for the state to settle, then adjust scroll
+            setTimeout(() => {
+                // Estimate content height added: CHUNK_SIZE * Estimated Card Height (e.g., 150px)
+                const estimatedHeight = CHUNK_SIZE * 50;
+                window.scrollBy(0, estimatedHeight);
+            }, 0);
         }
     }, []);
 
@@ -90,7 +94,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         async (pageNumber: number, direction: "up" | "down") => {
             if (fetchingPages.current.has(pageNumber)) return;
 
-            // Restore removed page if it exists
+            // --- Chunk Restoration Logic ---
             if (pagesRef.current.has(pageNumber)) {
                 if (direction === "up" && removedTopPages.current.includes(pageNumber)) {
                     removedTopPages.current = removedTopPages.current.filter(p => p !== pageNumber);
@@ -108,15 +112,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
             setLoadingCount(c => c + 1);
 
             try {
-                // Anchor before prepending
-                if (direction === "up" && quotes.length > 0) {
-                    const prevFirstId = quotes[0]?.id;
-                    const el = document.getElementById(`quote-${prevFirstId}`);
-                    anchorRef.current = {
-                        id: prevFirstId ?? null,
-                        top: el ? el.getBoundingClientRect().top : 0,
-                    };
-                }
+                // NOTE: Anchor capture logic for prepending removed here
 
                 const data = await searchQuotes({
                     q: query,
@@ -133,10 +129,12 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
                 }
 
                 pagesRef.current.set(pageNumber, data.results);
+
                 if (direction === "up") pageOrderRef.current.unshift(pageNumber);
                 else pageOrderRef.current.push(pageNumber);
 
                 rebuildQuotes(direction);
+
             } catch (err) {
                 console.error(err);
             } finally {
@@ -144,15 +142,20 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
                 setLoadingCount(c => Math.max(0, c - 1));
             }
         },
-        [query, quotes.length, rebuildQuotes]
+        [query, rebuildQuotes] // Removed quotes.length dependency as it's not needed for the fetch logic
     );
 
+    // useLayoutEffect removed entirely!
+
     const handleSearch = () => {
+        // Reset all state and refs for a new search
         pagesRef.current.clear();
         pageOrderRef.current = [];
         removedTopPages.current = [];
         removedBottomPages.current = [];
         fetchingPages.current.clear();
+        anchorRef.current = { id: null, top: 0 };
+
         setQuotes([]);
         setResultsCount(null);
         setHasMoreDown(true);
@@ -166,43 +169,43 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         handleKeyDown(e);
     };
 
+    // ------------------- Scroll Handler -------------------
     useEffect(() => {
+        const tickingRef = { current: false };
+
         const onScroll = () => {
-            const scrollPosition = window.innerHeight + window.scrollY;
-            const threshold = document.body.offsetHeight - 200;
+            if (tickingRef.current) return;
+            tickingRef.current = true;
 
-            // Scroll down
-            if (scrollPosition >= threshold && hasMoreDown) {
-                const next = endPage !== null ? endPage + 1 : 1;
-                fetchPage(next, "down");
+            requestAnimationFrame(() => {
+                const scrollPosition = window.innerHeight + window.scrollY;
+                const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+                const nearBottom = scrollPosition >= scrollHeight - 200;
+                const nearTop = window.scrollY < 200;
 
-                if (quotes.length + CHUNK_SIZE > MAX_QUOTES && startPage !== null) {
-                    const topPage = pageOrderRef.current[0];
-                    removedTopPages.current.push(topPage);
-                    pageOrderRef.current.shift();
-                    rebuildQuotes();
+                // Scroll down (Append)
+                if (nearBottom && hasMoreDown) {
+                    const next = endPage !== null ? endPage + 1 : 1;
+                    fetchPage(next, "down");
                 }
-            }
 
-            // Scroll up
-            if (window.scrollY < 200 && hasMoreUp) {
-                const prev = startPage !== null ? startPage - 1 : null;
-                if (prev && prev >= 1) {
-                    fetchPage(prev, "up");
-
-                    if (quotes.length + CHUNK_SIZE > MAX_QUOTES && endPage !== null) {
-                        const bottomPage = pageOrderRef.current[pageOrderRef.current.length - 1];
-                        removedBottomPages.current.push(bottomPage);
-                        pageOrderRef.current.pop();
-                        rebuildQuotes("up");
+                // Scroll up (Prepend)
+                if (nearTop && hasMoreUp) {
+                    const prev = startPage !== null ? startPage - 1 : null;
+                    if (prev && prev >= 1) {
+                        fetchPage(prev, "up");
                     }
                 }
-            }
+
+                tickingRef.current = false;
+            });
         };
 
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
-    }, [fetchPage, hasMoreDown, hasMoreUp, quotes.length, startPage, endPage, rebuildQuotes]);
+    }, [fetchPage, hasMoreDown, hasMoreUp, startPage, endPage]);
+    // ----------------- End Scroll Handler -----------------
+
 
     return (
         <div className="flex flex-col items-center">
@@ -245,6 +248,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
                     <p className="flex text-lg opacity-70 justify-center">No results</p>
                 ) : null}
             </div>
+            {loadingCount > 0 && <p className="text-center text-white opacity-50 mt-4">Loading more results...</p>}
         </div>
     );
 };
