@@ -173,11 +173,11 @@ class CommunityQuoteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
-        Save user ID (foreign key) when creating a quote.
+        Save logged-in user as quote_owner.
         """
         request = self.context.get("request")
         if request and request.user.is_authenticated:
-            validated_data["quote_author"] = request.user  # saves ID internally
+            validated_data["quote_owner"] = request.user
 
         genre_name = validated_data.pop("quote_genre", None)
 

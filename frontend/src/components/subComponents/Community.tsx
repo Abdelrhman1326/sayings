@@ -11,10 +11,12 @@ interface Quote {
   id: number;
   quote_text: string;
   quote_genre: string | null;
-  quote_author: string | null;
+  quote_author?: string;
+  isDraft?: boolean;
 }
 
 const CHUNK_SIZE = 20;
+const MAX_QUOTES = 100;
 
 const Community: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -24,8 +26,7 @@ const Community: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
 
-  const anchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
-
+  // Fetch username
   useLayoutEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -62,7 +63,12 @@ const Community: React.FC = () => {
         return;
       }
 
-      setQuotes((prev) => [...prev, ...data.results]);
+      setQuotes((prev) => {
+        const newQuotes = [...prev, ...data.results];
+        // Keep only the latest MAX_QUOTES
+        return newQuotes.slice(-MAX_QUOTES);
+      });
+
       setPage(data.next_page || page + 1);
     } catch (err: any) {
       toast.error("Failed to fetch quotes");
@@ -88,76 +94,87 @@ const Community: React.FC = () => {
 
   return (
       <div className="flex flex-col items-center w-full px-4 py-6">
-        {[{ id: 0, quote_text: text, quote_genre: null, isDraft: true }, ...quotes].map((quote, index) => (
-            <div key={quote.id || index} className="mb-4 w-full max-w-[800px]">
-              {quote.isDraft ? (
-                  <div className="flex flex-col gap-2 bg-[#1D1D1D] px-4 py-4 rounded-2xl w-full">
-                    {/* Username row */}
-                    <div className="flex flex-row gap-2 items-center mb-2 opacity-90">
-                      {username ? (
-                          <div
-                              style={{ backgroundColor: getColor(username[0].toUpperCase()) }}
-                              className="flex w-8 h-8 text-center text-white font-imb justify-center items-center rounded-full"
-                          >
-                            <p>{username[0].toUpperCase()}</p>
-                          </div>
-                      ) : (
-                          <CircleUserRound size={30} style={{ marginBottom: "2px" }} />
-                      )}
-                      <p className="font-ibm text-md text-white text-[17px]">{username}</p>
-                    </div>
+        {[{ id: 0, quote_text: text, quote_genre: null, isDraft: true }, ...quotes].map(
+            (quote, index) => (
+                <div key={quote.id || index} className="mb-4 w-full max-w-[800px]">
+                  {quote.isDraft ? (
+                      <div className="flex flex-col gap-2 bg-[#1D1D1D] px-4 py-4 rounded-2xl w-full">
+                        {/* Username row */}
+                        <div className="flex flex-row gap-2 items-center mb-2 opacity-90">
+                          {username ? (
+                              <div
+                                  style={{ backgroundColor: getColor(username[0].toUpperCase()) }}
+                                  className="flex w-8 h-8 text-center text-white font-imb justify-center items-center rounded-full"
+                              >
+                                <p>{username[0].toUpperCase()}</p>
+                              </div>
+                          ) : (
+                              <CircleUserRound size={30} style={{ marginBottom: "2px" }} />
+                          )}
+                          <p className="font-ibm text-md text-white text-[17px]">{username}</p>
+                        </div>
 
-                    {/* Post input */}
-                    <input
-                        type="text"
-                        placeholder="Impress the world with your words"
-                        className="flex bg-transparent outline-none text-white placeholder-gray-400 text-lg border-b border-gray-700 pb-2 pl-2"
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                    />
+                        {/* Post input */}
+                        <input
+                            type="text"
+                            placeholder="Impress the world with your words"
+                            className="flex bg-transparent outline-none text-white placeholder-gray-400 text-lg border-b border-gray-700 pb-2 pl-2"
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                        />
 
-                    {/* Publish button */}
-                    <button
-                        type="button"
-                        onClick={async () => {
-                          if (!text.trim()) {
-                            toast.error("Quote text cannot be empty");
-                            return;
-                          }
-                          setLoading(true);
-                          const loadingToast = toast.loading("Publishing quote");
-                          try {
-                            const response = await publish({ genre: "", text: text.trim() });
-                            setText("");
-                            toast.update(loadingToast, {
-                              render: "Quote published",
-                              type: "success",
-                              isLoading: false,
-                              autoClose: 3000,
-                            });
-                            setQuotes((prev) => [response, ...prev]);
-                          } catch (error: any) {
-                            toast.update(loadingToast, {
-                              render: error?.message || "Error while publishing quote",
-                              type: "error",
-                              isLoading: false,
-                              autoClose: 3000,
-                            });
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                        className="mt-1 bg-[#9CA3AF] text-black outline-none font-bold px-4 py-2 rounded-2xl text-[20px] hover:shadow-md hover:shadow-purple-500/50 transition duration-300 ease-in"
-                    >
-                      Publish
-                    </button>
-                  </div>
-              ) : (
-                  <QuoteCard id={quote.id} text={quote.quote_text} author={quote.quote_author} likes_count={null}
-                             dislikes_count={null} source={""} />
-              )}
-            </div>
-        ))}
+                        {/* Publish button */}
+                        <button
+                            type="button"
+                            onClick={async () => {
+                              if (!text.trim()) {
+                                toast.error("Quote text cannot be empty");
+                                return;
+                              }
+                              setLoading(true);
+                              const loadingToast = toast.loading("Publishing quote");
+                              try {
+                                const response = await publish({ genre: "", text: text.trim() });
+                                setText("");
+                                toast.update(loadingToast, {
+                                  render: "Quote published",
+                                  type: "success",
+                                  isLoading: false,
+                                  autoClose: 3000,
+                                });
+                                setQuotes((prev) => {
+                                  const newQuotes = [response, ...prev];
+                                  return newQuotes.slice(0, MAX_QUOTES);
+                                });
+                              } catch (error: any) {
+                                toast.update(loadingToast, {
+                                  render: error?.message || "Error while publishing quote",
+                                  type: "error",
+                                  isLoading: false,
+                                  autoClose: 3000,
+                                });
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                            className="mt-1 bg-[#9CA3AF] text-black outline-none font-bold px-4 py-2 rounded-2xl text-[20px] hover:shadow-md hover:shadow-purple-500/50 transition duration-300 ease-in"
+                        >
+                          Publish
+                        </button>
+                      </div>
+                  ) : (
+                      <QuoteCard
+                          id={quote.id}
+                          text={quote.quote_text}
+                          author={quote.quote_author}
+                          likes_count={null}
+                          dislikes_count={null}
+                          source={""}
+                      />
+                  )}
+                </div>
+            )
+        )}
         {quotes.length === 0 && !loading && (
             <p className="flex text-lg opacity-70 justify-center text-center mt-4">
               No quotes yet

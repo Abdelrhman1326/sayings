@@ -59,7 +59,6 @@ class CommunityQuote(models.Model):
         related_name="community_quotes"
     )
 
-
     def __str__(self):
         return self.quote_text
 
