@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'apis',
     'rest_framework',
     'drf_spectacular',
-    'drf_spectacular_sidecar',  # 👈 Required for Redoc/Swagger UI templates to work
+    'drf_spectacular_sidecar',  # Required for Redoc/Swagger UI templates to work
     'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -114,8 +114,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'sayings_db',
-        'USER': 'auth_user',
-        'PASSWORD': '132006',
+        'USER': 'sayings_auth_user',
+        'PASSWORD': '5iaF@S@ZfXhOIyM47fuQEd%4YrS9e1',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
