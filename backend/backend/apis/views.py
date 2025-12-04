@@ -663,109 +663,124 @@ class RetrieveQuoteGenres(APIView):
 class FeedView(APIView):
     """
     Optimized infinite feed endpoint with database-level scoring.
-    Uses cursor-based pagination with composite scoring.
+    Adds liked_by_user, disliked_by_user, saved_by_user to each quote.
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        # Engagement is fetched here ONCE for the whole API call
         engagement, _ = UserEngagement.objects.get_or_create(user=user)
 
-        # --- Step 1: Get pagination params ---
+        # --- Step 1: Pagination params ---
         limit = int(request.query_params.get("limit", 20))
-        limit = min(limit, 100)  # Cap limit for performance
+        limit = min(limit, 100)
 
         cursor_score = request.query_params.get("cursor_score")
         cursor_id = request.query_params.get("cursor_id")
 
-        # --- Step 2: Build user genre preferences mapping ---
+        # --- Step 2: User genre profile ---
         user_genres = engagement.user_profile or {}
 
-        # Create CASE-WHEN for genre scoring in database
-        genre_cases = []
-        for genre_name, score in user_genres.items():
-            genre_cases.append(
-                When(quote_genre__name=genre_name, then=Value(score))
-            )
+        genre_cases = [
+            When(quote_genre__name=genre, then=Value(score))
+            for genre, score in user_genres.items()
+        ]
 
-        # Default genre score for unmatched genres
         genre_score_expression = Case(
             *genre_cases,
             default=Value(0.0),
             output_field=FloatField()
         )
 
-        # --- Step 3: Build the optimized query ---
-        queryset = Quote.objects.select_related('quote_genre').prefetch_related('info')
+        # --- Step 3: Build optimized query ---
+        queryset = Quote.objects.select_related("quote_genre").prefetch_related("info")
 
-        # Add computed score fields
         queryset = queryset.annotate(
-            # Genre preference score (0.6 weight)
             genre_weight=genre_score_expression * 0.6,
 
-            # Popularity score (0.2 weight) - handle null info gracefully
             popularity_score=Case(
                 When(info__isnull=True, then=Value(0.0)),
-                default=(F('info__upvotes') - F('info__downvotes')) * 0.2,
+                default=(F("info__upvotes") - F("info__downvotes")) * 0.2,
                 output_field=FloatField()
             ),
 
-            # Recency score (0.15 weight) - exponential decay
-            days_old=Extract('created_at', 'epoch') / 86400.0,  # Convert to days
+            days_old=Extract("created_at", "epoch") / 86400.0,
             current_days=Value(timezone.now().timestamp() / 86400.0),
-            age_in_days=F('current_days') - F('days_old'),
+            age_in_days=F("current_days") - F("days_old"),
+
             recency_score=Case(
                 When(age_in_days__lte=0, then=Value(0.15)),
-                default=0.15 * Exp(-1 * F('age_in_days') / 7.0),
+                default=0.15 * Exp(-1 * F("age_in_days") / 7.0),
                 output_field=FloatField()
             ),
 
-            # Small random component (0.05 weight) - using database random
             jitter=Random() * 0.05,
 
-            # Final composite score
-            final_score=F('genre_weight') + F('popularity_score') + F('recency_score') + F('jitter')
+            final_score=(
+                F("genre_weight")
+                + F("popularity_score")
+                + F("recency_score")
+                + F("jitter")
+            )
         )
 
-        # --- Step 4: Apply cursor-based filtering ---
+        # --- Step 4: Cursor-based filtering ---
         if cursor_score is not None and cursor_id is not None:
             try:
                 cursor_score = float(cursor_score)
                 cursor_id = int(cursor_id)
 
-                # Filter: score < cursor_score OR (score = cursor_score AND id < cursor_id)
                 queryset = queryset.filter(
-                    models.Q(final_score__lt=cursor_score) |
-                    models.Q(final_score=cursor_score, id__lt=cursor_id)
+                    Q(final_score__lt=cursor_score)
+                    | Q(final_score=cursor_score, id__lt=cursor_id)
                 )
-            except (ValueError, TypeError):
-                # Invalid cursor, start from beginning
+            except Exception:
                 pass
 
-        # --- Step 5: Order and limit ---
-        queryset = queryset.order_by('-final_score', '-id')[:limit + 1]  # +1 to check if more results exist
-
-        # --- Step 6: Execute query and prepare response ---
+        # --- Step 5: Order & limit ---
+        queryset = queryset.order_by("-final_score", "-id")[: limit + 1]
         quotes_list = list(queryset)
         has_more = len(quotes_list) > limit
 
         if has_more:
-            quotes_list = quotes_list[:limit]  # Remove the extra item
+            quotes_list = quotes_list[:limit]
 
-        # --- Step 7: Prepare next cursor ---
+        # --- Step 6: Inject user engagement flags ---
+        visible_ids = [q.id for q in quotes_list]
+
+        liked_ids = set(
+            engagement.liked_quotes.filter(id__in=visible_ids)
+            .values_list("id", flat=True)
+        )
+        disliked_ids = set(
+            engagement.disliked_quotes.filter(id__in=visible_ids)
+            .values_list("id", flat=True)
+        )
+        saved_ids = set(
+            engagement.saved_quotes.filter(id__in=visible_ids)
+            .values_list("id", flat=True)
+        )
+
+        for q in quotes_list:
+            q.liked_by_user = q.id in liked_ids
+            q.disliked_by_user = q.id in disliked_ids
+            q.saved_by_user = q.id in saved_ids
+
+        # --- Step 7: Next cursor ---
         next_cursor = None
         if has_more and quotes_list:
-            last_quote = quotes_list[-1]
+            last = quotes_list[-1]
             next_cursor = {
-                "cursor_score": float(last_quote.final_score),
-                "cursor_id": last_quote.id
+                "cursor_score": float(last.final_score),
+                "cursor_id": last.id,
             }
 
-        # --- Step 8: Serialize response ---
-        context = {'request': request, 'user_engagement': engagement}
-        serializer = QuoteSerializer(quotes_list, many=True, context=context)
-        # ----------------------------------------------------------------------
+        # --- Step 8: Serialize ---
+        serializer = QuoteSerializer(
+            quotes_list,
+            many=True,
+            context={"request": request, "user_engagement": engagement}
+        )
 
         return Response({
             "results": serializer.data,

@@ -131,6 +131,8 @@ const Feed: React.FC = () => {
               likes_count={quote.likes_count}
               dislikes_count={quote.dislikes_count}
               source={quote.quote_source}
+              liked_by_user={quote.liked_by_user}
+              disliked_by_user={quote.disliked_by_user}
             />
           </div>
         ))
