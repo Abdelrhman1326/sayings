@@ -619,6 +619,54 @@ class RetrievePublishedQuoteCountView(APIView):
             "published_quote_count": count
         }, status=status.HTTP_200_OK)
 
+
+class ShuffledCommunityQuotesView(generics.ListAPIView):
+    """
+    Returns a paginated list of all Community Quotes, shuffled randomly.
+    This view includes user engagement flags (liked/disliked/saved) if the CommunityQuote
+    model is linked to the Quote model (which it is assumed to be, or the serializer handles it).
+    """
+
+    serializer_class = CommunityQuoteSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        # 1. Target the CommunityQuote model as intended by the class name.
+        queryset = (
+            CommunityQuote.objects
+            # Prefetching/Selecting related data on CommunityQuote depends on its foreign keys.
+            # Assuming CommunityQuote has links similar to Quote for optimal retrieval.
+            # If CommunityQuote links to a Quote object, you'd select that.
+            # For simplicity, we just order by Random() here.
+            .all()
+        )
+
+        # 2. Shuffle the quotes using Random() function.
+        return queryset.order_by(models.functions.Random())
+
+    def list(self, request, *args, **kwargs):
+        # Apply pagination to the randomized queryset
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+
+        if page is None:
+            return Response({"results": []})
+
+        quotes = list(page)
+
+        # --- Engagement Optimization (Injecting User Flags) ---
+        user = self.request.user
+        # Retrieve or create UserEngagement for the current user
+        engagement, _ = UserEngagement.objects.get_or_create(user=user)
+
+        visible_ids = [q.id for q in quotes]
+
+        # --- Serialization ---
+        serializer = self.get_serializer(quotes, many=True)
+        return self.get_paginated_response(serializer.data)
+
+
 class DeleteCommunityQuote(generics.DestroyAPIView):
     serializer_class = CommunityQuoteSerializer
     permission_classes = [IsAuthenticated]

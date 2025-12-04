@@ -2,7 +2,7 @@ from django.urls import path
 from .views import SignupView, LoginView, AuthView, LogoutView
 from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView, RetrievePublishedQuotes, DeleteCommunityQuote, RetrieveQuoteGenres
 from .views import LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView, RetrieveLikedQuotesView, RetrieveDisLikedQuotesView, RetrieveUsernameView, CopyQuoteView
-from .views import FeedView, UserEngagementView, RetrievePublishedQuoteCountView
+from .views import FeedView, UserEngagementView, RetrievePublishedQuoteCountView, ShuffledCommunityQuotesView
 
 urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
@@ -13,6 +13,7 @@ urlpatterns = [
     path('community_quotes/publish/', CommunityQuoteCreateView.as_view(), name='community-quote-create'),
     path('community_quotes/published/', RetrievePublishedQuotes.as_view(), name='community-quote-list-published'),
     path('community_quotes/delete/<int:pk>/', DeleteCommunityQuote.as_view(), name='delete-community-quote'),
+    path('community_quotes/community/', ShuffledCommunityQuotesView.as_view(), name='community'),
 
     path('users/engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
     path('users/username/', RetrieveUsernameView.as_view(), name='retrieve-username'),
