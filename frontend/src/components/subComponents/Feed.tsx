@@ -29,7 +29,7 @@ const Feed: React.FC = () => {
     if (loading || (!hasMore && !prepend)) return;
 
     setLoading(true);
-    const toastId = toast.loading("Loading feed...", { autoClose: false });
+    // const toastId = toast.loading("Loading feed...", { autoClose: false });
 
     try {
       if (prepend && quotes.length > 0) {
@@ -72,10 +72,10 @@ const Feed: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load feed");
+      // toast.error("Failed to load feed");
     } finally {
       setLoading(false);
-      toast.dismiss(toastId);
+      // toast.dismiss(toastId);
     }
   };
 
