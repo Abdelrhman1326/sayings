@@ -8,8 +8,8 @@ export const publish = async ({ text, genre }: { text: string; genre: string }) 
         const response = await axios.post(
             "/apis/community_quotes/publish/",
             {
-                quote_text: text,
                 quote_genre: genre,
+                quote_text: text,
             },
             {
                 withCredentials: true,

@@ -4,8 +4,6 @@ import { useState, useLayoutEffect, useEffect } from "react";
 import { getColor } from "../ui/ProfileIconColor";
 import { publish } from "../../apis/publishQuote";
 import { toast } from "react-toastify";
-import { getQuoteGenres } from "../../apis/listQuoteGenre";
-import MultiselectInput from "../subComponents/MultiselectInput";
 
 type Option = {
   value: string;
@@ -14,37 +12,8 @@ type Option = {
 
 const Community = () => {
   const [username, setUsername] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState<Option | null>(null);
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [genres, setGenres] = useState<Option[]> ([]);
-
-    const getGenres = async () => {
-      try {
-        const responseData = await getQuoteGenres(); // string[]
-        const mapped = responseData.map((g: string) => ({
-          value: g.toLowerCase(),
-          label: g,
-        }));
-
-        // Save to localStorage properly
-        localStorage.setItem("genreslist-cash", JSON.stringify(mapped));
-        setGenres(mapped);
-      } catch (error) {
-        console.error("error while getting genre list", error);
-
-        // Load cached genres if they exist
-        const cachedGenres = localStorage.getItem("genreslist-cash");
-        if (cachedGenres) {
-          setGenres(JSON.parse(cachedGenres));
-          console.log("cached genres list used instead");
-        }
-      }
-    };
-
-  useEffect(() => {
-    getGenres();
-  }, []);
 
   useLayoutEffect(() => {
     const fetchUsername = async () => {
@@ -57,7 +26,6 @@ const Community = () => {
         const response = await getUsername();
         if (response.username) {
           const cleanedUsername = response.username.trim();
-          setUsername(cleanedUsername);
           localStorage.setItem("sayings_username", cleanedUsername);
         }
       } catch (err) {
@@ -85,10 +53,6 @@ const Community = () => {
     }
     setText(cleanedText);
   };
-
-  useEffect(() => {
-    cleanText();
-  }, [text]);
 
   return (
     <div className="flex flex-col items-center h-screen">
@@ -119,13 +83,6 @@ const Community = () => {
           onChange={(e) => setText(e.target.value)}
         />
 
-        {/* Genres input */}
-        <MultiselectInput
-          options={genres}
-          placeholder="Select a genre"
-          onChange={(selected) => setSelectedGenre(selected)} // Fixed: now properly handles single option
-        />
-
         {/* Publish button */}
         <button
           type="button"
@@ -134,24 +91,19 @@ const Community = () => {
               toast.error("Quote text cannot be empty");
               return;
             }
-            if (!selectedGenre) { // Fixed: check for null instead of empty array
-              toast.error("Please select a genre");
-              return;
-            }
 
             setLoading(true);
             const loadingToast = toast.loading("Publishing quote");
             try {
               // Send data with the parameter names that publish() expects
-              const response = await publish({ 
+              const response = await publish({
+                genre: "",
                 text: text.trim(),        // publish() expects 'text'
-                genre: selectedGenre.value  // publish() expects 'genre'
               });
               console.log("Published:", response);
 
               // Reset state
               setText("");
-              setSelectedGenre(null); // Fixed: reset to null instead of empty array
               toast.update(loadingToast, {
                 render: "Quote published",
                 type: "success",
