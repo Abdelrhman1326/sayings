@@ -7,6 +7,7 @@ import { getSavedQuotes } from "../apis/getSavedQuotes";
 import { getLikedQuotes } from "../apis/getLikedQuotes.ts";
 import { getDisliked_quotes } from "../apis/getDislikedQuotes.ts";
 import { getPublishedQuotes } from "../apis/listPublishedQuotes";
+import { getPublishedCount } from "../apis/getPublishedCount";
 import { toast } from "react-toastify";
 import QuoteCard from "./subComponents/QuoteCard";
 
@@ -29,7 +30,7 @@ const Profile = () => {
     const [textColor, setTextColor] = useState("black");
     const [followers, setFollowers] = useState<number>(0);
     const [following, setFollowing] = useState<number>(0);
-    const [name, setName] = useState<string>("...");
+    const [publishedCount, setpublishedCount] = useState<string>("");
     const [editIconHovered, setEditIconHovered] = useState<boolean>(false);
 
     // ---------------- Published Quotes State ----------------
@@ -392,6 +393,41 @@ const Profile = () => {
         fetchUsername();
     }, []);
 
+    // ---------------- PUBLISHED COUNT LOGIC ----------------
+    useEffect(() => {
+        const fetchPublishedCount = async () => {
+            try {
+                const response = await getPublishedCount();
+                let count: number | null = null;
+
+                // Assuming the API returns the count directly or nested in a 'count' or 'data.count' field.
+                if (typeof response === 'number') {
+                    count = response;
+                } else if (response && typeof response.count === 'number') {
+                    count = response.count;
+                } else if (response && response.data && typeof response.data.count === 'number') {
+                    count = response.data.count;
+                } else if (response && typeof response.detail === 'string' && response.detail.includes("not provided")) {
+                    // Handle 401 error or other structured error gracefully
+                    console.warn("Authentication required for published count, defaulting to 0.");
+                    count = 0;
+                }
+
+                if (count !== null) {
+                    setpublishedCount(`${count} Published`);
+                } else {
+                    setpublishedCount("0 Published");
+                }
+            } catch (err) {
+                console.error("Error fetching published count:", err);
+                setpublishedCount("0 Published");
+            }
+        };
+
+        fetchPublishedCount();
+    }, []); // Empty dependency array means this runs once on mount.
+    // ---------------- END PUBLISHED COUNT LOGIC ----------------
+
     // --- LOGIC TO FORCE REFETCH ON TAB CHANGE ---
     useEffect(() => {
         const resetAndFetch = (
@@ -489,9 +525,9 @@ const Profile = () => {
                         {/* username + info */}
                         <div className="flex flex-col ml-6 font-ibm font-bold">
                             <h1 className="text-[28px]">{username}</h1>
-                            <h2>{name}</h2>
-                            <h3>{`${followers} followers`}</h3>
-                            <h3>{`${following} following`}</h3>
+                            <h2>{publishedCount}</h2>
+                            {/*<h3>{`${followers} followers`}</h3>*/}
+                            {/*<h3>{`${following} following`}</h3>*/}
                         </div>
                     </div>
                 </div>

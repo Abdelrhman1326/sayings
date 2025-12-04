@@ -507,7 +507,6 @@ class BaseQuoteListView(generics.ListAPIView):
         context['user_engagement'] = user_engagement
         return context
 
-
 class RetrieveSavedQuotesView(BaseQuoteListView):
     """
     Returns saved quotes for the authenticated user with pagination.
@@ -519,7 +518,6 @@ class RetrieveSavedQuotesView(BaseQuoteListView):
         # order by newest first; prefetch related info for efficiency
         return engagement.saved_quotes.all().prefetch_related("info").order_by('-id')
 
-
 class RetrieveLikedQuotesView(BaseQuoteListView):
     """
     Returns a list of liked quotes by the user sending the request.
@@ -527,7 +525,6 @@ class RetrieveLikedQuotesView(BaseQuoteListView):
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
         return engagement.liked_quotes.all().prefetch_related("info").order_by('-id')
-
 
 class RetrieveDisLikedQuotesView(BaseQuoteListView):
     """
@@ -537,7 +534,6 @@ class RetrieveDisLikedQuotesView(BaseQuoteListView):
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
         return engagement.disliked_quotes.all().prefetch_related("info").order_by('-id')
-
 
 class CopyQuoteView(APIView):
     """
@@ -576,7 +572,6 @@ class CopyQuoteView(APIView):
                 "quote_id": quote_id,
             })
 
-
 ###
 # Community Quotes:
 class CommunityQuoteCreateView(generics.CreateAPIView, GenericAPIView):
@@ -607,6 +602,23 @@ class RetrievePublishedQuotes(generics.ListAPIView):
         return CommunityQuote.objects.filter(quote_owner=user).order_by('-id')
 
 
+class RetrievePublishedQuoteCountView(APIView):
+    """
+    Returns the total count of CommunityQuotes published by the logged-in user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # 1. Filter CommunityQuote objects by the current user
+        # 2. Use .count() to get the total number directly from the database
+        count = CommunityQuote.objects.filter(quote_owner=user).count()
+
+        return Response({
+            "published_quote_count": count
+        }, status=status.HTTP_200_OK)
+
 class DeleteCommunityQuote(generics.DestroyAPIView):
     serializer_class = CommunityQuoteSerializer
     permission_classes = [IsAuthenticated]
@@ -615,7 +627,6 @@ class DeleteCommunityQuote(generics.DestroyAPIView):
         user = self.request.user
         # Ensure the user can only delete their own quotes
         return CommunityQuote.objects.filter(quote_owner=user)
-
 
 # Algorithm views
 ###
@@ -659,11 +670,15 @@ class RetrieveQuoteGenres(APIView):
         genres = list(Genre.objects.values_list("name", flat=True))
         return Response(genres)
 
-
 class FeedView(APIView):
     """
-    Optimized infinite feed endpoint with database-level scoring.
-    Adds liked_by_user, disliked_by_user, saved_by_user to each quote.
+    Infinite feed with modular scoring:
+    - genre boost
+    - popularity boost
+    - recency decay
+    - unseen boost
+    - interaction penalty (liked/disliked)
+    - jitter
     """
     permission_classes = [IsAuthenticated]
 
@@ -671,102 +686,105 @@ class FeedView(APIView):
         user = request.user
         engagement, _ = UserEngagement.objects.get_or_create(user=user)
 
-        # --- Step 1: Pagination params ---
+        # --- Pagination ---
         limit = int(request.query_params.get("limit", 20))
         limit = min(limit, 100)
 
         cursor_score = request.query_params.get("cursor_score")
         cursor_id = request.query_params.get("cursor_id")
 
-        # --- Step 2: User genre profile ---
+        # --- User genres ---
         user_genres = engagement.user_profile or {}
 
         genre_cases = [
-            When(quote_genre__name=genre, then=Value(score))
-            for genre, score in user_genres.items()
+            When(quote_genre__name=g, then=Value(score))
+            for g, score in user_genres.items()
         ]
 
-        genre_score_expression = Case(
-            *genre_cases,
-            default=Value(0.0),
-            output_field=FloatField()
+        genre_score = Case(
+            *genre_cases, default=Value(0.0), output_field=FloatField()
         )
 
-        # --- Step 3: Build optimized query ---
+        # --- Lists for penalties ---
+        liked_qs = engagement.liked_quotes.values_list("id", flat=True)
+        disliked_qs = engagement.disliked_quotes.values_list("id", flat=True)
+        seen_qs = engagement.seen_quotes.values_list("id", flat=True) \
+            if hasattr(engagement, "seen_quotes") else []
+
+        # --- Base Query ---
         queryset = Quote.objects.select_related("quote_genre").prefetch_related("info")
 
+        # --- Annotate scoring ---
         queryset = queryset.annotate(
-            genre_weight=genre_score_expression * 0.6,
 
+            # 1. Genre preference (weighted)
+            genre_weight=genre_score * 0.6,
+
+            # 2. Popularity score
             popularity_score=Case(
                 When(info__isnull=True, then=Value(0.0)),
-                default=(F("info__upvotes") - F("info__downvotes")) * 0.2,
+                default=(F("info__upvotes") - F("info__downvotes")) * 0.15,
                 output_field=FloatField()
             ),
 
+            # 3. Recency score (decays)
             days_old=Extract("created_at", "epoch") / 86400.0,
             current_days=Value(timezone.now().timestamp() / 86400.0),
             age_in_days=F("current_days") - F("days_old"),
-
             recency_score=Case(
-                When(age_in_days__lte=0, then=Value(0.15)),
-                default=0.15 * Exp(-1 * F("age_in_days") / 7.0),
+                When(age_in_days__lte=0, then=Value(0.2)),
+                default=0.2 * Exp(-1 * F("age_in_days") / 7.0),
                 output_field=FloatField()
             ),
 
+            # 4. UNSEEN BOOST
+            unseen_boost=Case(
+                When(id__in=seen_qs, then=Value(0.0)),
+                default=Value(0.4),         # big boost for new content
+                output_field=FloatField()
+            ),
+
+            # 5. Interaction penalty
+            interaction_penalty=Case(
+                When(id__in=liked_qs, then=Value(-5.0)),
+                When(id__in=disliked_qs, then=Value(-10.0)),
+                default=Value(0.0),
+                output_field=FloatField()
+            ),
+
+            # 6. Random jitter
             jitter=Random() * 0.05,
 
+            # 7. Final score
             final_score=(
                 F("genre_weight")
                 + F("popularity_score")
                 + F("recency_score")
+                + F("unseen_boost")
+                + F("interaction_penalty")
                 + F("jitter")
             )
         )
 
-        # --- Step 4: Cursor-based filtering ---
-        if cursor_score is not None and cursor_id is not None:
-            try:
-                cursor_score = float(cursor_score)
-                cursor_id = int(cursor_id)
+        # --- Cursor filtering ---
+        if cursor_score and cursor_id:
+            cursor_score = float(cursor_score)
+            cursor_id = int(cursor_id)
 
-                queryset = queryset.filter(
-                    Q(final_score__lt=cursor_score)
-                    | Q(final_score=cursor_score, id__lt=cursor_id)
-                )
-            except Exception:
-                pass
+            queryset = queryset.filter(
+                Q(final_score__lt=cursor_score)
+                | Q(final_score=cursor_score, id__lt=cursor_id)
+            )
 
-        # --- Step 5: Order & limit ---
-        queryset = queryset.order_by("-final_score", "-id")[: limit + 1]
+        # --- Order & Limit ---
+        queryset = queryset.order_by("-final_score", "-id")[:limit + 1]
         quotes_list = list(queryset)
         has_more = len(quotes_list) > limit
 
         if has_more:
             quotes_list = quotes_list[:limit]
 
-        # --- Step 6: Inject user engagement flags ---
-        visible_ids = [q.id for q in quotes_list]
-
-        liked_ids = set(
-            engagement.liked_quotes.filter(id__in=visible_ids)
-            .values_list("id", flat=True)
-        )
-        disliked_ids = set(
-            engagement.disliked_quotes.filter(id__in=visible_ids)
-            .values_list("id", flat=True)
-        )
-        saved_ids = set(
-            engagement.saved_quotes.filter(id__in=visible_ids)
-            .values_list("id", flat=True)
-        )
-
-        for q in quotes_list:
-            q.liked_by_user = q.id in liked_ids
-            q.disliked_by_user = q.id in disliked_ids
-            q.saved_by_user = q.id in saved_ids
-
-        # --- Step 7: Next cursor ---
+        # --- Next cursor ---
         next_cursor = None
         if has_more and quotes_list:
             last = quotes_list[-1]
@@ -775,12 +793,19 @@ class FeedView(APIView):
                 "cursor_id": last.id,
             }
 
-        # --- Step 8: Serialize ---
-        serializer = QuoteSerializer(
-            quotes_list,
-            many=True,
-            context={"request": request, "user_engagement": engagement}
-        )
+        # --- Engagement flags for frontend ---
+        visible_ids = [q.id for q in quotes_list]
+        liked_ids = set(engagement.liked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        disliked_ids = set(engagement.disliked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        saved_ids = set(engagement.saved_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+
+        for q in quotes_list:
+            q.liked_by_user = q.id in liked_ids
+            q.disliked_by_user = q.id in disliked_ids
+            q.saved_by_user = q.id in saved_ids
+
+        # --- Serialize ---
+        serializer = QuoteSerializer(quotes_list, many=True)
 
         return Response({
             "results": serializer.data,
