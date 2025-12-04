@@ -585,13 +585,11 @@ class CommunityQuoteCreateView(generics.CreateAPIView, GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        genre = self.request.data.get("quote_genre")
-        # Validate genre
-        if not Genre.objects.filter(name__iexact=genre).exists():
-            raise ValidationError({"genre": f"Invalid genre: {genre}"})
-
+        # genre could not be submitted by user:
+        genre: str = self.request.data.get("quote_genre")
+        if (genre != ""):
+            raise ValidationError({"genre": f"Unrecognized parameter."})
         serializer.save(quote_owner=self.request.user)
-
 
 # ---------------- Retrieve Published Quotes (edited to be paginated + ordered)
 class RetrievePublishedQuotes(generics.ListAPIView):

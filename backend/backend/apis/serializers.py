@@ -159,7 +159,10 @@ from .models import CommunityQuote, Genre
 
 class CommunityQuoteSerializer(serializers.ModelSerializer):
     # Accept genre name as input
-    quote_genre = serializers.CharField(write_only=True)
+    quote_genre = serializers.CharField(
+        write_only=True,
+        allow_blank=True
+    )
 
     class Meta:
         model = CommunityQuote
