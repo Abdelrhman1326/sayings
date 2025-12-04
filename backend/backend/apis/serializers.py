@@ -164,12 +164,23 @@ class CommunityQuoteSerializer(serializers.ModelSerializer):
         allow_blank=True
     )
 
+    # Return username instead of user ID
+    quote_author = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = CommunityQuote
-        fields = ["id", "quote_text", "quote_genre"]
+        fields = ["id", "quote_text", "quote_genre", "quote_author"]
 
     def create(self, validated_data):
+        """
+        Save user ID (foreign key) when creating a quote.
+        """
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            validated_data["quote_author"] = request.user  # saves ID internally
+
         genre_name = validated_data.pop("quote_genre", None)
+
         quote = CommunityQuote.objects.create(**validated_data)
 
         if genre_name:
@@ -179,8 +190,20 @@ class CommunityQuoteSerializer(serializers.ModelSerializer):
 
         return quote
 
+    def get_quote_author(self, obj):
+        """
+        When retrieving, return the username instead of the user ID.
+        """
+        if obj.quote_owner:
+            return obj.quote_owner.username
+        return None
+
     def to_representation(self, instance):
-        """Control how quote_genre is displayed when reading"""
+        """
+        Convert genre object → genre name.
+        """
         data = super().to_representation(instance)
-        data["quote_genre"] = instance.quote_genre.name if instance.quote_genre else None
+        data["quote_genre"] = (
+            instance.quote_genre.name if instance.quote_genre else None
+        )
         return data

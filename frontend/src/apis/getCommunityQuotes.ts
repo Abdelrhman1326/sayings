@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
 
-
 interface PaginationParameters {
     limit?: number;   // default 50
     page?: number;    // default 1
@@ -9,14 +8,13 @@ interface PaginationParameters {
 
 /**
  * Fetches a paginated, randomly shuffled list of all community quotes.
- * * NOTE: The URL '/community_quotes/community/' is used exactly as requested,
- * but the function name reflects the actual view (ShuffledCommunityQuotesView).
+ * Full backend URL is used to avoid Vite dev server returning HTML.
  */
-export const fetchShuffledCommunityQuotes = async (params: PaginationParameters) => {
+export const getCommunityQuotes = async (params: PaginationParameters) => {
     try {
         const csrfToken = getCookie('csrftoken');
 
-        const response = await axios.get("/community_quotes/community/", {
+        const response = await axios.get("http://127.0.0.1:8000/apis/community_quotes/community/", {
             params: {
                 limit: params.limit || 50,
                 page: params.page || 1,
@@ -27,6 +25,7 @@ export const fetchShuffledCommunityQuotes = async (params: PaginationParameters)
                 'X-CSRFToken': csrfToken,
             },
         });
+
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
