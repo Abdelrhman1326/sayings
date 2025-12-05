@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
+import React, { useEffect, useState, useLayoutEffect } from "react";
 import { CircleUserRound } from "lucide-react";
 import { getUsername } from "../../apis/getUsername";
 import { getColor } from "../ui/ProfileIconColor";
@@ -13,6 +13,9 @@ interface Quote {
   quote_genre: string | null;
   quote_author?: string;
   isDraft?: boolean;
+  dislikes_count?: number;
+  likes_count?: number;
+  is_community?: boolean;
 }
 
 const CHUNK_SIZE = 20;
@@ -65,7 +68,6 @@ const Community: React.FC = () => {
 
       setQuotes((prev) => {
         const newQuotes = [...prev, ...data.results];
-        // Keep only the latest MAX_QUOTES
         return newQuotes.slice(-MAX_QUOTES);
       });
 
@@ -167,9 +169,10 @@ const Community: React.FC = () => {
                           id={quote.id}
                           text={quote.quote_text}
                           author={quote.quote_author}
-                          likes_count={null}
-                          dislikes_count={null}
-                          source={""}
+                          likes_count={quote.likes_count ?? 0}
+                          dislikes_count={quote.dislikes_count ?? 0}
+                          source={quote.quote_genre ?? ""}
+                          isCommunity={quote.is_community ?? false}
                       />
                   )}
                 </div>

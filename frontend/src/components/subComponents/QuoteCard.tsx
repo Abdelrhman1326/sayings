@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Copy, Bookmark, BookmarkCheck } from "lucide-react";
 import { toast } from "react-toastify";
 
-// Assuming these paths are correct for your environment
 import { likeQuote } from "../../apis/likeQuote";
 import { dislikeQuote } from "../../apis/dislikeQuote";
 import { undoReaction } from "../../apis/undoReaction";
@@ -12,14 +11,15 @@ import { copyQuote } from "../../apis/copyQuote";
 interface QuoteCardProps {
     id: number | string;
     text: string;
-    author: string;
+    author?: string;
     likes_count: number | null;
     dislikes_count: number | null;
-    source: string;
+    source?: string;
     saved?: boolean;
     onUnsave?: (id: number | string) => void;
     liked_by_user?: boolean;
     disliked_by_user?: boolean;
+    isCommunity?: boolean;
 }
 
 const QuoteCard: React.FC<QuoteCardProps> = ({
@@ -33,10 +33,9 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                                                  onUnsave,
                                                  liked_by_user = false,
                                                  disliked_by_user = false,
+                                                 isCommunity = false,
                                              }) => {
-    // Initialize state
-    const initialAction: "like" | "dislike" | null =
-        liked_by_user ? "like" : disliked_by_user ? "dislike" : null;
+    const initialAction: "like" | "dislike" | null = liked_by_user ? "like" : disliked_by_user ? "dislike" : null;
 
     const [likes, setLikes] = useState(likes_count ?? 0);
     const [dislikes, setDislikes] = useState(dislikes_count ?? 0);
@@ -44,23 +43,17 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState<boolean>(savedProp);
 
-    // ✅ Fix: keep local state in sync with props (important if props load asynchronously)
     useEffect(() => {
-        if (liked_by_user) {
-            setLastAction("like");
-        } else if (disliked_by_user) {
-            setLastAction("dislike");
-        } else {
-            setLastAction(null);
-        }
+        if (liked_by_user) setLastAction("like");
+        else if (disliked_by_user) setLastAction("dislike");
+        else setLastAction(null);
     }, [liked_by_user, disliked_by_user]);
 
     const processCopyInBackend = async () => {
         try {
-            const response = await copyQuote(Number(id));
-            console.log("Copy action processed in the backend:", response);
+            await copyQuote(Number(id));
         } catch (err: any) {
-            console.error("Error while processing copy action in the backend:", err?.message || err);
+            console.error("Error processing copy action:", err?.message || err);
         }
     };
 
@@ -116,7 +109,6 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
         try {
             const response: any = await saveQuote(id);
             const message = response.data.message;
-
             if (message === "Quote saved") {
                 setSaved(true);
                 toast.success("Saved");
@@ -137,48 +129,22 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
             {source && <p className="text-right text-gray-400">{source}</p>}
 
             <div className="flex items-center gap-4 text-gray-400 mt-2">
-                <div
-                    className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200"
-                    onClick={handleLike}
-                >
-                    <ThumbsUp
-                        size={16}
-                        stroke={lastAction === "like" ? "currentColor" : "gray"}
-                        fill={lastAction === "like" ? "currentColor" : "none"}
-                    />
+                <div className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200" onClick={handleLike}>
+                    <ThumbsUp size={16} stroke={lastAction === "like" ? "currentColor" : "gray"} fill={lastAction === "like" ? "currentColor" : "none"} />
                     <span>{likes}</span>
                 </div>
 
-                <div
-                    className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200"
-                    onClick={handleDislike}
-                >
-                    <ThumbsDown
-                        size={16}
-                        stroke={lastAction === "dislike" ? "currentColor" : "gray"}
-                        fill={lastAction === "dislike" ? "currentColor" : "none"}
-                    />
+                <div className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200" onClick={handleDislike}>
+                    <ThumbsDown size={16} stroke={lastAction === "dislike" ? "currentColor" : "gray"} fill={lastAction === "dislike" ? "currentColor" : "none"} />
                     <span>{dislikes}</span>
                 </div>
 
-                <Copy
-                    size={16}
-                    className="cursor-pointer hover:text-white transition-colors duration-200"
-                    onClick={() => copyToClipboard(text)}
-                />
+                <Copy size={16} className="cursor-pointer hover:text-white transition-colors duration-200" onClick={() => copyToClipboard(text)} />
 
                 {saved ? (
-                    <BookmarkCheck
-                        size={18}
-                        className="cursor-pointer hover:text-white transition-colors duration-200"
-                        onClick={handleSave}
-                    />
+                    <BookmarkCheck size={18} className="cursor-pointer hover:text-white transition-colors duration-200" onClick={handleSave} />
                 ) : (
-                    <Bookmark
-                        size={18}
-                        className="cursor-pointer hover:text-white transition-colors duration-200"
-                        onClick={handleSave}
-                    />
+                    <Bookmark size={18} className="cursor-pointer hover:text-white transition-colors duration-200" onClick={handleSave} />
                 )}
             </div>
 
