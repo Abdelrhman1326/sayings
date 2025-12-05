@@ -1,10 +1,14 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
 
-export const likeQuote = async (quote_id: number) => {
+export const likeQuote = async (quote_id: number, isCommunity: boolean = false) => {
+    const URL = isCommunity
+        ? `/apis/community_quotes/${quote_id}/like/`
+        : `/apis/quotes/${quote_id}/like/`;
+
     try {
         const csrfToken = getCookie('csrftoken');
-        const response = await axios.post(`/apis/quotes/${quote_id}/like/`, {}, {
+        const response = await axios.post(URL, {}, {
             withCredentials: true,
             headers: {
                 'Content-Type': 'application/json',

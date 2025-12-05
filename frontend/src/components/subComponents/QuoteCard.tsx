@@ -33,15 +33,29 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                                                  onUnsave,
                                                  liked_by_user = false,
                                                  disliked_by_user = false,
-                                                 isCommunity = false,
+                                                 isCommunity: isCommunityProp = false,
                                              }) => {
-    const initialAction: "like" | "dislike" | null = liked_by_user ? "like" : disliked_by_user ? "dislike" : null;
+    const initialAction: "like" | "dislike" | null = liked_by_user
+        ? "like"
+        : disliked_by_user
+            ? "dislike"
+            : null;
 
     const [likes, setLikes] = useState(likes_count ?? 0);
     const [dislikes, setDislikes] = useState(dislikes_count ?? 0);
     const [lastAction, setLastAction] = useState<"like" | "dislike" | null>(initialAction);
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState<boolean>(savedProp);
+    const [isCommunity, setIsCommunity] = useState<boolean>(isCommunityProp);
+
+    // Keep saved and isCommunity in sync if parent props change
+    useEffect(() => {
+        setSaved(savedProp);
+    }, [savedProp]);
+
+    useEffect(() => {
+        setIsCommunity(isCommunityProp);
+    }, [isCommunityProp]);
 
     useEffect(() => {
         if (liked_by_user) setLastAction("like");
@@ -51,7 +65,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
 
     const processCopyInBackend = async () => {
         try {
-            await copyQuote(Number(id));
+            await copyQuote(Number(id), isCommunity);
         } catch (err: any) {
             console.error("Error processing copy action:", err?.message || err);
         }
@@ -71,10 +85,10 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
         try {
             let response;
             if (lastAction === "like") {
-                response = await undoReaction(id, "like");
+                response = await undoReaction(Number(id), "like", isCommunity);
                 setLastAction(null);
             } else {
-                response = await likeQuote(id);
+                response = await likeQuote(Number(id), isCommunity);
                 setLastAction("like");
             }
             setLikes(response.likes_count);
@@ -90,10 +104,10 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
         try {
             let response;
             if (lastAction === "dislike") {
-                response = await undoReaction(id, "dislike");
+                response = await undoReaction(Number(id), "dislike", isCommunity);
                 setLastAction(null);
             } else {
-                response = await dislikeQuote(id);
+                response = await dislikeQuote(Number(id), isCommunity);
                 setLastAction("dislike");
             }
             setLikes(response.likes_count);
@@ -107,12 +121,12 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
 
     const handleSave = async () => {
         try {
-            const response: any = await saveQuote(id);
-            const message = response.data.message;
-            if (message === "Quote saved") {
+            const response: any = await saveQuote(Number(id), isCommunity);
+            const message = response.message;
+            if (message === "Quote saved" || message === "Community quote saved") {
                 setSaved(true);
                 toast.success("Saved");
-            } else if (message === "Quote unsaved") {
+            } else if (message === "Quote unsaved" || message === "Community quote unsaved") {
                 setSaved(false);
                 toast.success("Unsaved");
                 onUnsave?.(id);
@@ -129,22 +143,48 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
             {source && <p className="text-right text-gray-400">{source}</p>}
 
             <div className="flex items-center gap-4 text-gray-400 mt-2">
-                <div className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200" onClick={handleLike}>
-                    <ThumbsUp size={16} stroke={lastAction === "like" ? "currentColor" : "gray"} fill={lastAction === "like" ? "currentColor" : "none"} />
+                <div
+                    className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200"
+                    onClick={handleLike}
+                >
+                    <ThumbsUp
+                        size={16}
+                        stroke={lastAction === "like" ? "currentColor" : "gray"}
+                        fill={lastAction === "like" ? "currentColor" : "none"}
+                    />
                     <span>{likes}</span>
                 </div>
 
-                <div className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200" onClick={handleDislike}>
-                    <ThumbsDown size={16} stroke={lastAction === "dislike" ? "currentColor" : "gray"} fill={lastAction === "dislike" ? "currentColor" : "none"} />
+                <div
+                    className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200"
+                    onClick={handleDislike}
+                >
+                    <ThumbsDown
+                        size={16}
+                        stroke={lastAction === "dislike" ? "currentColor" : "gray"}
+                        fill={lastAction === "dislike" ? "currentColor" : "none"}
+                    />
                     <span>{dislikes}</span>
                 </div>
 
-                <Copy size={16} className="cursor-pointer hover:text-white transition-colors duration-200" onClick={() => copyToClipboard(text)} />
+                <Copy
+                    size={16}
+                    className="cursor-pointer hover:text-white transition-colors duration-200"
+                    onClick={() => copyToClipboard(text)}
+                />
 
                 {saved ? (
-                    <BookmarkCheck size={18} className="cursor-pointer hover:text-white transition-colors duration-200" onClick={handleSave} />
+                    <BookmarkCheck
+                        size={18}
+                        className="cursor-pointer hover:text-white transition-colors duration-200"
+                        onClick={handleSave}
+                    />
                 ) : (
-                    <Bookmark size={18} className="cursor-pointer hover:text-white transition-colors duration-200" onClick={handleSave} />
+                    <Bookmark
+                        size={18}
+                        className="cursor-pointer hover:text-white transition-colors duration-200"
+                        onClick={handleSave}
+                    />
                 )}
             </div>
 

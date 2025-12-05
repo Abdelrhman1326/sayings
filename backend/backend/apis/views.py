@@ -493,6 +493,79 @@ class SaveCommunityQuoteView(APIView):
                 return Response({"message": "Community quote saved"}, status=200)
 
 
+class UndoCommunityQuoteReactionView(APIView):
+    """
+    Undo a like or dislike on a community quote.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, action, quote_id):
+        user = request.user
+
+        # Validate quote existence
+        quote = CommunityQuote.objects.filter(id=quote_id).first()
+        if not quote:
+            return Response(
+                {"status": "error", "message": "Community Quote not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        with transaction.atomic():
+            # Lock info row
+            quote_info, _ = CommunityQuoteInfo.objects.select_for_update().get_or_create(
+                quote=quote,
+                defaults={"upvotes": 0, "downvotes": 0}
+            )
+
+            # Lock engagement row
+            engagement, _ = UserEngagement.objects.select_for_update().get_or_create(user=user)
+
+            if action == "like":
+                if not engagement.liked_community_quotes.filter(id=quote_id).exists():
+                    return Response(
+                        {"status": "error", "message": "User has not liked this community quote"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+                # Undo like
+                engagement.liked_community_quotes.remove(quote)
+                if quote_info.upvotes > 0:
+                    quote_info.upvotes -= 1
+                quote_info.save()
+
+                return Response({
+                    "status": "success",
+                    "message": "Undo like on community quote",
+                    "likes_count": quote_info.upvotes,
+                    "dislikes_count": quote_info.downvotes
+                }, status=status.HTTP_200_OK)
+
+            elif action == "dislike":
+                if not engagement.disliked_community_quotes.filter(id=quote_id).exists():
+                    return Response(
+                        {"status": "error", "message": "User has not disliked this community quote"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+                # Undo dislike
+                engagement.disliked_community_quotes.remove(quote)
+                if quote_info.downvotes > 0:
+                    quote_info.downvotes -= 1
+                quote_info.save()
+
+                return Response({
+                    "status": "success",
+                    "message": "Undo dislike on community quote",
+                    "likes_count": quote_info.upvotes,
+                    "dislikes_count": quote_info.downvotes
+                }, status=status.HTTP_200_OK)
+
+            else:
+                return Response(
+                    {"status": "error", "message": "Unknown action"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
 
 class UndoQuoteReactionView(APIView):
     permission_classes = [IsAuthenticated]

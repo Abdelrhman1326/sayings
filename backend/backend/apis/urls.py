@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import SignupView, LoginView, AuthView, LogoutView, LikeCommunityQuoteView, DislikeCommunityQuoteView, \
-    SaveCommunityQuoteView
+    SaveCommunityQuoteView, UndoCommunityQuoteReactionView
 from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView, RetrievePublishedQuotes, DeleteCommunityQuote, RetrieveQuoteGenres
 from .views import LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView, RetrieveLikedQuotesView, RetrieveDisLikedQuotesView, RetrieveUsernameView, CopyQuoteView
 from .views import FeedView, UserEngagementView, RetrievePublishedQuoteCountView, ShuffledCommunityQuotesView
@@ -20,9 +20,10 @@ urlpatterns = [
     path('community_quotes/published/', RetrievePublishedQuotes.as_view(), name='community-quote-list-published'),
     path('community_quotes/delete/<int:pk>/', DeleteCommunityQuote.as_view(), name='delete-community-quote'),
     path('community_quotes/community/', ShuffledCommunityQuotesView.as_view(), name='community'),
-    path('community/<int:quote_id>/like/', LikeCommunityQuoteView.as_view(), name='like-community-quote'),
-    path('community/<int:quote_id>/dislike/', DislikeCommunityQuoteView.as_view(), name='dislike-community-quote'),
-    path('community/<int:quote_id>/save/', SaveCommunityQuoteView.as_view(), name='save-community-quote'),
+    path('community_quotes/<int:quote_id>/like/', LikeCommunityQuoteView.as_view(), name='like-community-quote'),
+    path('community_quotes/<int:quote_id>/dislike/', DislikeCommunityQuoteView.as_view(), name='dislike-community-quote'),
+    path('community_quotes/<int:quote_id>/save/', SaveCommunityQuoteView.as_view(), name='save-community-quote'),
+    path('community_quotes/undo/<str:action>/<int:quote_id>/', UndoCommunityQuoteReactionView.as_view()),
 
     # Quotes
     path('quotes/search_quotes/', SearchQuotesView.as_view(), name='search_quotes'),
