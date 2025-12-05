@@ -118,7 +118,7 @@ const Community: React.FC = () => {
                         <input
                             type="text"
                             placeholder="Impress the world with your words"
-                            className="flex bg-transparent outline-none text-white placeholder-gray-400 text-lg border-b border-gray-700 pb-2 pl-2"
+                            className="flex bg-transparent outline-none text-white placeholder-gray-400 text-lg border-gray-700 pb-[4px] pl-2"
                             value={text}
                             onChange={(e) => setText(e.target.value)}
                         />
