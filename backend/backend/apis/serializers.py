@@ -164,16 +164,20 @@ class CommunityQuoteSerializer(serializers.ModelSerializer):
         allow_blank=True
     )
 
+    likes_count = serializers.IntegerField(source='info.upvotes', read_only=True)
+    dislikes_count = serializers.IntegerField(source='info.downvotes', read_only=True)
+
     # Return username instead of user ID
     quote_author = serializers.SerializerMethodField(read_only=True)
+    is_community = serializers.BooleanField(default=True, read_only=True)
 
     class Meta:
         model = CommunityQuote
-        fields = ["id", "quote_text", "quote_genre", "quote_author"]
+        fields = ["id", "quote_text", "quote_genre", "quote_author", "is_community", "likes_count", "dislikes_count"]
 
     def create(self, validated_data):
         """
-        Save logged-in user as quote_owner.
+        Save logged-in user as quote_owner and ensure CommunityQuoteInfo exists.
         """
         request = self.context.get("request")
         if request and request.user.is_authenticated:
@@ -181,14 +185,21 @@ class CommunityQuoteSerializer(serializers.ModelSerializer):
 
         genre_name = validated_data.pop("quote_genre", None)
 
+        # Create the quote
         quote = CommunityQuote.objects.create(**validated_data)
 
+        # Ensure CommunityQuoteInfo exists
+        from .models import CommunityQuoteInfo
+        CommunityQuoteInfo.objects.get_or_create(quote=quote)
+
+        # Set genre if provided
         if genre_name:
             genre, _ = Genre.objects.get_or_create(name=genre_name)
             quote.quote_genre = genre
             quote.save()
 
         return quote
+
 
     def get_quote_author(self, obj):
         """

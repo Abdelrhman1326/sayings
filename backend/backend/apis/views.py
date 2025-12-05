@@ -17,7 +17,7 @@ from yaml import serialize
 from .serializers import SignupSerializer, LoginSerializer, QuoteSerializer, DeleteQuoteSerializer, \
     CommunityQuoteSerializer, UserEngagementSerializer
 # models:
-from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo, Genre
+from .models import User, Quote, CommunityQuote, UserEngagement, QuoteInfo, Genre, CommunityQuoteInfo
 from rest_framework.exceptions import ValidationError
 from .utils import get_delta, update_genre_score
 import random
@@ -376,6 +376,122 @@ class DislikeQuoteView(APIView):
             "likes_count": quote_info.upvotes,
             "dislikes_count": quote_info.downvotes
         }, status=status.HTTP_200_OK)
+
+class LikeCommunityQuoteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, quote_id):
+        user = request.user
+
+        # Validate quote existence
+        quote = CommunityQuote.objects.filter(id=quote_id).first()
+        if not quote:
+            return Response(
+                {"status": "error", "message": "Community Quote not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        with transaction.atomic():
+            # Lock info row
+            quote_info, _ = CommunityQuoteInfo.objects.select_for_update().get_or_create(
+                quote=quote,
+                defaults={"upvotes": 0, "downvotes": 0}
+            )
+
+            # Lock engagement row
+            engagement, _ = UserEngagement.objects.select_for_update().get_or_create(user=user)
+
+            # Already liked?
+            if engagement.liked_community_quotes.filter(id=quote.id).exists():
+                return Response(
+                    {"status": "error", "message": "User already liked this community quote"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Switching from dislike → like
+            if engagement.disliked_community_quotes.filter(id=quote.id).exists():
+                engagement.disliked_community_quotes.remove(quote)
+                if quote_info.downvotes > 0:
+                    quote_info.downvotes -= 1
+
+            # Apply like (CORRECT FIELD)
+            engagement.liked_community_quotes.add(quote)
+            quote_info.upvotes += 1
+            quote_info.save()
+
+            return Response({
+                "status": "success",
+                "message": "Community quote liked",
+                "likes_count": quote_info.upvotes,
+                "dislikes_count": quote_info.downvotes
+            }, status=status.HTTP_200_OK)
+
+class DislikeCommunityQuoteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, quote_id):
+        user = request.user
+
+        quote = CommunityQuote.objects.filter(id=quote_id).first()
+        if not quote:
+            return Response(
+                {"status": "error", "message": "Community Quote not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        with transaction.atomic():
+            quote_info, _ = CommunityQuoteInfo.objects.select_for_update().get_or_create(
+                quote=quote,
+                defaults={"upvotes": 0, "downvotes": 0}
+            )
+            engagement, _ = UserEngagement.objects.select_for_update().get_or_create(user=user)
+
+            if engagement.disliked_community_quotes.filter(id=quote.id).exists():
+                return Response(
+                    {"status": "error", "message": "User already disliked this community quote"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Undo like if previously liked
+            if engagement.liked_community_quotes.filter(id=quote.id).exists():
+                engagement.liked_community_quotes.remove(quote)
+                if quote_info.upvotes > 0:
+                    quote_info.upvotes -= 1
+
+            # Apply dislike
+            engagement.disliked_community_quotes.add(quote)
+            quote_info.downvotes += 1
+            quote_info.save()
+
+        return Response({
+            "status": "success",
+            "message": "Community quote disliked",
+            "likes_count": quote_info.upvotes,
+            "dislikes_count": quote_info.downvotes
+        }, status=200)
+
+class SaveCommunityQuoteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, quote_id):
+        user = request.user
+
+        quote = CommunityQuote.objects.filter(id=quote_id).first()
+        if not quote:
+            return Response({"error": "Community Quote not found"}, status=404)
+
+        with transaction.atomic():
+            engagement, _ = UserEngagement.objects.select_for_update().get_or_create(user=user)
+
+            if engagement.saved_community_quotes.filter(id=quote.id).exists():
+                # Already saved → unsave
+                engagement.saved_community_quotes.remove(quote)
+                return Response({"message": "Community quote unsaved"}, status=200)
+            else:
+                # Not saved → save
+                engagement.saved_community_quotes.add(quote)
+                return Response({"message": "Community quote saved"}, status=200)
+
 
 
 class UndoQuoteReactionView(APIView):

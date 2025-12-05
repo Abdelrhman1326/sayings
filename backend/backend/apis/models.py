@@ -7,6 +7,7 @@ class User(AbstractUser):
     email = models.EmailField()
     password = models.CharField(max_length=128)  # Store hashed password only!
 
+
 class UserInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="info")
     following = models.ManyToManyField("self", symmetrical=False, related_name="followers", blank=True)
@@ -18,15 +19,16 @@ class UserInfo(models.Model):
     @property
     def following_count(self):
         return self.following.count()
-    
+
+
 class Genre(models.Model):
     name = models.CharField(max_length=1000, unique=True)
 
     def __str__(self):
         return self.name
 
-from django.utils import timezone
 
+from django.utils import timezone
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 
@@ -40,6 +42,7 @@ class Quote(models.Model):
 
     class Meta:
         indexes = [GinIndex(fields=["search_vector"])]
+
 
 class QuoteInfo(models.Model):
     quote = models.OneToOneField(Quote, on_delete=models.CASCADE, related_name="info")
@@ -62,6 +65,13 @@ class CommunityQuote(models.Model):
     def __str__(self):
         return self.quote_text
 
+
+class CommunityQuoteInfo(models.Model):
+    quote = models.OneToOneField(CommunityQuote, on_delete=models.CASCADE, related_name="info")
+    upvotes = models.PositiveIntegerField(default=0)
+    downvotes = models.PositiveIntegerField(default=0)
+    copy_count = models.PositiveIntegerField(default=0)
+
 class SearchQuery(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='latest_search_queries')
     query = models.TextField(blank=True)
@@ -71,5 +81,9 @@ class UserEngagement(models.Model):
     liked_quotes = models.ManyToManyField(Quote, related_name="liked_by", blank=True, db_index=True)
     disliked_quotes = models.ManyToManyField(Quote, related_name="disliked_by", blank=True, db_index=True)
     saved_quotes = models.ManyToManyField(Quote, related_name="saved_by", blank=True)
+
+    liked_community_quotes = models.ManyToManyField(CommunityQuote, related_name="liked_by", blank=True, db_index=True)
+    disliked_community_quotes = models.ManyToManyField(CommunityQuote, related_name="disliked_by", blank=True, db_index=True)
+    saved_community_quotes = models.ManyToManyField(CommunityQuote, related_name="saved_by", blank=True)
 
     user_profile = models.JSONField(default=dict)
