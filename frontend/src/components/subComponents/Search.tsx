@@ -11,6 +11,7 @@ interface Quote {
     quote_source: string;
     liked_by_user: boolean;
     disliked_by_user: boolean;
+    saved_by_user: boolean;
 }
 
 interface SearchProps {
@@ -239,6 +240,7 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
                                 source={quote.quote_source}
                                 liked_by_user={quote.liked_by_user}
                                 disliked_by_user={quote.disliked_by_user}
+                                saved={quote.saved_by_user}
                             />
                         </div>
                     ))
