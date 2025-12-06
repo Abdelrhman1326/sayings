@@ -126,6 +126,7 @@ class QuoteSerializer(serializers.ModelSerializer):
     # Use the pre-annotated flags from queryset
     liked_by_user = serializers.BooleanField(read_only=True)
     disliked_by_user = serializers.BooleanField(read_only=True)
+    saved_by_user = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Quote
@@ -138,7 +139,8 @@ class QuoteSerializer(serializers.ModelSerializer):
             'likes_count',
             'dislikes_count',
             'liked_by_user',
-            'disliked_by_user'
+            'disliked_by_user',
+            'saved_by_user',
         ]
 
 class DeleteQuoteSerializer(serializers.Serializer):

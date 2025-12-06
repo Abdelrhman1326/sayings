@@ -748,21 +748,75 @@ class RetrieveSavedQuotesView(BaseQuoteListView):
 
 
 class RetrieveLikedQuotesView(BaseQuoteListView):
-    """
-    Returns a list of liked quotes by the user sending the request.
-    """
+
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
-        return engagement.liked_quotes.all().prefetch_related("info").order_by('-id')
+        return (
+            engagement.liked_quotes
+            .all()
+            .prefetch_related("info")
+            .order_by("-id")
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is None:
+            return Response({"results": []})
+
+        quotes = list(page)
+        visible_ids = [q.id for q in quotes]
+
+        engagement = request.user.engagement
+
+        liked_ids = set(engagement.liked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        disliked_ids = set(engagement.disliked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        saved_ids = set(engagement.saved_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+
+        for q in quotes:
+            q.liked_by_user = q.id in liked_ids     # always true but safe
+            q.disliked_by_user = q.id in disliked_ids
+            q.saved_by_user = q.id in saved_ids
+
+        serializer = self.get_serializer(quotes, many=True)
+        return self.get_paginated_response(serializer.data)
+
 
 class RetrieveDisLikedQuotesView(BaseQuoteListView):
-    """
-    Returns a list of disliked quotes by the user sending the request.
-    """
 
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
-        return engagement.disliked_quotes.all().prefetch_related("info").order_by('-id')
+        return (
+            engagement.disliked_quotes
+            .all()
+            .prefetch_related("info")
+            .order_by("-id")
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is None:
+            return Response({"results": []})
+
+        quotes = list(page)
+        visible_ids = [q.id for q in quotes]
+
+        engagement = request.user.engagement
+
+        liked_ids = set(engagement.liked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        disliked_ids = set(engagement.disliked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        saved_ids = set(engagement.saved_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+
+        for q in quotes:
+            q.liked_by_user = q.id in liked_ids
+            q.disliked_by_user = q.id in disliked_ids   # always true inside this view
+            q.saved_by_user = q.id in saved_ids
+
+        serializer = self.get_serializer(quotes, many=True)
+        return self.get_paginated_response(serializer.data)
+
+
 
 class CopyQuoteView(APIView):
     """

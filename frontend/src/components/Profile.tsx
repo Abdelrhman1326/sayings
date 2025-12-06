@@ -22,6 +22,7 @@ type Quote = {
     quote_source?: string | null;
     disliked_by_user?: boolean;
     liked_by_user?: boolean;
+    saved_by_user?: boolean;
 };
 
 const Profile = () => {
@@ -625,6 +626,7 @@ const Profile = () => {
                                             saved={false}
                                             liked_by_user={true}
                                             disliked_by_user={false}
+                                            saved={quote.saved_by_user}
                                         />
                                     </div>
                                 );
@@ -653,6 +655,7 @@ const Profile = () => {
                                             saved={false}
                                             liked_by_user={false}
                                             disliked_by_user={true}
+                                            saved={quote.saved_by_user}
                                         />
                                     </div>
                                 );
