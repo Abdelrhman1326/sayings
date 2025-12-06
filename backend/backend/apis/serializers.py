@@ -173,9 +173,25 @@ class CommunityQuoteSerializer(serializers.ModelSerializer):
     quote_author = serializers.SerializerMethodField(read_only=True)
     is_community = serializers.BooleanField(default=True, read_only=True)
 
+    # User engagement fields
+    liked_by_user = serializers.SerializerMethodField()
+    disliked_by_user = serializers.SerializerMethodField()
+    saved_by_user = serializers.SerializerMethodField()
+
     class Meta:
         model = CommunityQuote
-        fields = ["id", "quote_text", "quote_genre", "quote_author", "is_community", "likes_count", "dislikes_count"]
+        fields = [
+            "id",
+            "quote_text",
+            "quote_genre",
+            "quote_author",
+            "is_community",
+            "likes_count",
+            "dislikes_count",
+            "liked_by_user",
+            "disliked_by_user",
+            "saved_by_user",
+        ]
 
     def create(self, validated_data):
         """
@@ -202,21 +218,34 @@ class CommunityQuoteSerializer(serializers.ModelSerializer):
 
         return quote
 
-
     def get_quote_author(self, obj):
         """
-        When retrieving, return the username instead of the user ID.
+        Return username instead of user ID.
         """
-        if obj.quote_owner:
-            return obj.quote_owner.username
-        return None
+        return obj.quote_owner.username if obj.quote_owner else None
+
+    def get_liked_by_user(self, obj):
+        user = self.context.get('request').user
+        if not user.is_authenticated or not hasattr(user, 'engagement'):
+            return False
+        return obj.id in user.engagement.liked_community_quotes.values_list('id', flat=True)
+
+    def get_disliked_by_user(self, obj):
+        user = self.context.get('request').user
+        if not user.is_authenticated or not hasattr(user, 'engagement'):
+            return False
+        return obj.id in user.engagement.disliked_community_quotes.values_list('id', flat=True)
+
+    def get_saved_by_user(self, obj):
+        user = self.context.get('request').user
+        if not user.is_authenticated or not hasattr(user, 'engagement'):
+            return False
+        return obj.id in user.engagement.saved_community_quotes.values_list('id', flat=True)
 
     def to_representation(self, instance):
         """
         Convert genre object → genre name.
         """
         data = super().to_representation(instance)
-        data["quote_genre"] = (
-            instance.quote_genre.name if instance.quote_genre else None
-        )
+        data["quote_genre"] = instance.quote_genre.name if instance.quote_genre else None
         return data
