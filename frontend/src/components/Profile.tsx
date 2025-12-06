@@ -20,8 +20,8 @@ type Quote = {
     likes_count?: number | null;
     dislikes_count?: number | null;
     quote_source?: string | null;
-    is_liked?: boolean;
-    is_disliked?: boolean;
+    disliked_by_user?: boolean;
+    liked_by_user?: boolean;
 };
 
 const Profile = () => {
@@ -595,8 +595,8 @@ const Profile = () => {
                                             dislikes_count={quote.dislikes_count ?? 0}
                                             source={quote.quote_source ?? ""}
                                             saved={true}
-                                            liked_by_user={quote.is_liked ?? false}
-                                            disliked_by_user={quote.is_disliked ?? false}
+                                            liked_by_user={quote.liked_by_user ?? false}
+                                            disliked_by_user={quote.disliked_by_user ?? false}
                                         />
                                     </div>
                                 );
