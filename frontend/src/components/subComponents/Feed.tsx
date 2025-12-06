@@ -10,6 +10,9 @@ interface Quote {
   likes_count: number | null;
   dislikes_count: number | null;
   quote_source: string;
+  liked_by_user?: boolean;
+  disliked_by_user?: boolean;
+  saved_by_user?: boolean;
 }
 
 const CHUNK_SIZE = 20;
@@ -133,6 +136,7 @@ const Feed: React.FC = () => {
               source={quote.quote_source}
               liked_by_user={quote.liked_by_user}
               disliked_by_user={quote.disliked_by_user}
+              saved={quote.saved_by_user}
             />
           </div>
         ))
