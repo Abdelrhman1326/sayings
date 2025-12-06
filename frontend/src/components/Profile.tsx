@@ -27,6 +27,7 @@ type Quote = {
     saved_by_user?: boolean;
     disliked_by_user?: boolean;
     liked_by_user?: boolean;
+    isCommunity?: boolean;
 };
 
 const Profile = () => {
@@ -603,6 +604,7 @@ const Profile = () => {
                                             saved={true}
                                             liked_by_user={quote.liked_by_user ?? false}
                                             disliked_by_user={quote.disliked_by_user ?? false}
+                                            isCommunity={quote.is_community ?? false}
                                         />
                                     </div>
                                 );
@@ -632,6 +634,7 @@ const Profile = () => {
                                             liked_by_user={true}
                                             disliked_by_user={false}
                                             saved={quote.saved_by_user}
+                                            isCommunity={quote.is_community ?? false}
                                         />
                                     </div>
                                 );
@@ -661,6 +664,7 @@ const Profile = () => {
                                             liked_by_user={false}
                                             disliked_by_user={true}
                                             saved={quote.saved_by_user}
+                                            isCommunity={quote.is_community ?? false}
                                         />
                                     </div>
                                 );

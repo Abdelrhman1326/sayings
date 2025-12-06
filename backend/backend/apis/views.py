@@ -697,65 +697,64 @@ class BaseQuoteListView(generics.ListAPIView):
         return context
 
 class RetrieveSavedQuotesView(BaseQuoteListView):
-    """
-    Returns saved quotes for the authenticated user with pagination.
-    """
+    """Returns saved quotes (normal + community) for the authenticated user with pagination."""
 
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
-        return (
-            engagement.saved_quotes
-            .all()
-            .prefetch_related("info")
-            .order_by("-id")
+        return list(
+            engagement.saved_quotes.all().prefetch_related("info").order_by("-id")
+        ) + list(
+            engagement.saved_community_quotes.all().prefetch_related("info").order_by("-id")
         )
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-
-        # --- Pagination ---
         page = self.paginate_queryset(queryset)
         if page is None:
             return Response({"results": []})
 
         quotes = list(page)
         visible_ids = [q.id for q in quotes]
-
         engagement = request.user.engagement
 
-        # --- Liked / Disliked Queries (batched, no loops) ---
         liked_ids = set(
-            engagement.liked_quotes
-            .filter(id__in=visible_ids)
-            .values_list("id", flat=True)
+            list(engagement.liked_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.liked_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
         )
-
         disliked_ids = set(
-            engagement.disliked_quotes
-            .filter(id__in=visible_ids)
-            .values_list("id", flat=True)
+            list(engagement.disliked_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.disliked_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        )
+        saved_ids = set(
+            list(engagement.saved_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.saved_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
         )
 
-        # --- Inject flags into quote objects ---
         for q in quotes:
             q.liked_by_user = q.id in liked_ids
             q.disliked_by_user = q.id in disliked_ids
-            q.saved_by_user = True  # This list = saved quotes
+            q.saved_by_user = True
 
-        # --- Serialize ---
-        serializer = self.get_serializer(quotes, many=True)
-        return self.get_paginated_response(serializer.data)
+        # Serialize each quote with the correct serializer
+        data = [
+            CommunityQuoteSerializer(q, context=self.get_serializer_context()).data
+            if isinstance(q, CommunityQuote)
+            else QuoteSerializer(q, context=self.get_serializer_context()).data
+            for q in quotes
+        ]
+
+        return self.get_paginated_response(data)
 
 
 class RetrieveLikedQuotesView(BaseQuoteListView):
+    """Returns liked quotes (normal + community) for the authenticated user."""
 
     def get_queryset(self):
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
-        return (
-            engagement.liked_quotes
-            .all()
-            .prefetch_related("info")
-            .order_by("-id")
+        return list(
+            engagement.liked_quotes.all().prefetch_related("info").order_by("-id")
+        ) + list(
+            engagement.liked_community_quotes.all().prefetch_related("info").order_by("-id")
         )
 
     def list(self, request, *args, **kwargs):
@@ -766,57 +765,83 @@ class RetrieveLikedQuotesView(BaseQuoteListView):
 
         quotes = list(page)
         visible_ids = [q.id for q in quotes]
-
         engagement = request.user.engagement
 
-        liked_ids = set(engagement.liked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
-        disliked_ids = set(engagement.disliked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
-        saved_ids = set(engagement.saved_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
-
-        for q in quotes:
-            q.liked_by_user = q.id in liked_ids     # always true but safe
-            q.disliked_by_user = q.id in disliked_ids
-            q.saved_by_user = q.id in saved_ids
-
-        serializer = self.get_serializer(quotes, many=True)
-        return self.get_paginated_response(serializer.data)
-
-
-class RetrieveDisLikedQuotesView(BaseQuoteListView):
-
-    def get_queryset(self):
-        engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
-        return (
-            engagement.disliked_quotes
-            .all()
-            .prefetch_related("info")
-            .order_by("-id")
+        liked_ids = set(
+            list(engagement.liked_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.liked_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
         )
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        page = self.paginate_queryset(queryset)
-        if page is None:
-            return Response({"results": []})
-
-        quotes = list(page)
-        visible_ids = [q.id for q in quotes]
-
-        engagement = request.user.engagement
-
-        liked_ids = set(engagement.liked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
-        disliked_ids = set(engagement.disliked_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
-        saved_ids = set(engagement.saved_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        disliked_ids = set(
+            list(engagement.disliked_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.disliked_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        )
+        saved_ids = set(
+            list(engagement.saved_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.saved_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        )
 
         for q in quotes:
             q.liked_by_user = q.id in liked_ids
-            q.disliked_by_user = q.id in disliked_ids   # always true inside this view
+            q.disliked_by_user = q.id in disliked_ids
             q.saved_by_user = q.id in saved_ids
 
-        serializer = self.get_serializer(quotes, many=True)
-        return self.get_paginated_response(serializer.data)
+        data = [
+            CommunityQuoteSerializer(q, context=self.get_serializer_context()).data
+            if isinstance(q, CommunityQuote)
+            else QuoteSerializer(q, context=self.get_serializer_context()).data
+            for q in quotes
+        ]
+
+        return self.get_paginated_response(data)
 
 
+class RetrieveDisLikedQuotesView(BaseQuoteListView):
+    """Returns disliked quotes (normal + community) for the authenticated user."""
+
+    def get_queryset(self):
+        engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
+        return list(
+            engagement.disliked_quotes.all().prefetch_related("info").order_by("-id")
+        ) + list(
+            engagement.disliked_community_quotes.all().prefetch_related("info").order_by("-id")
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is None:
+            return Response({"results": []})
+
+        quotes = list(page)
+        visible_ids = [q.id for q in quotes]
+        engagement = request.user.engagement
+
+        liked_ids = set(
+            list(engagement.liked_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.liked_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        )
+        disliked_ids = set(
+            list(engagement.disliked_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.disliked_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        )
+        saved_ids = set(
+            list(engagement.saved_quotes.filter(id__in=visible_ids).values_list("id", flat=True)) +
+            list(engagement.saved_community_quotes.filter(id__in=visible_ids).values_list("id", flat=True))
+        )
+
+        for q in quotes:
+            q.liked_by_user = q.id in liked_ids
+            q.disliked_by_user = q.id in disliked_ids
+            q.saved_by_user = q.id in saved_ids
+
+        data = [
+            CommunityQuoteSerializer(q, context=self.get_serializer_context()).data
+            if isinstance(q, CommunityQuote)
+            else QuoteSerializer(q, context=self.get_serializer_context()).data
+            for q in quotes
+        ]
+
+        return self.get_paginated_response(data)
 
 class CopyQuoteView(APIView):
     """
