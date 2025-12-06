@@ -702,10 +702,50 @@ class RetrieveSavedQuotesView(BaseQuoteListView):
     """
 
     def get_queryset(self):
-        # The get_queryset still hits the DB, but the serializer will use the context
         engagement, _ = UserEngagement.objects.get_or_create(user=self.request.user)
-        # order by newest first; prefetch related info for efficiency
-        return engagement.saved_quotes.all().prefetch_related("info").order_by('-id')
+        return (
+            engagement.saved_quotes
+            .all()
+            .prefetch_related("info")
+            .order_by("-id")
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        # --- Pagination ---
+        page = self.paginate_queryset(queryset)
+        if page is None:
+            return Response({"results": []})
+
+        quotes = list(page)
+        visible_ids = [q.id for q in quotes]
+
+        engagement = request.user.engagement
+
+        # --- Liked / Disliked Queries (batched, no loops) ---
+        liked_ids = set(
+            engagement.liked_quotes
+            .filter(id__in=visible_ids)
+            .values_list("id", flat=True)
+        )
+
+        disliked_ids = set(
+            engagement.disliked_quotes
+            .filter(id__in=visible_ids)
+            .values_list("id", flat=True)
+        )
+
+        # --- Inject flags into quote objects ---
+        for q in quotes:
+            q.liked_by_user = q.id in liked_ids
+            q.disliked_by_user = q.id in disliked_ids
+            q.saved_by_user = True  # This list = saved quotes
+
+        # --- Serialize ---
+        serializer = self.get_serializer(quotes, many=True)
+        return self.get_paginated_response(serializer.data)
+
 
 class RetrieveLikedQuotesView(BaseQuoteListView):
     """
