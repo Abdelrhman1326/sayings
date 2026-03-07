@@ -56,13 +56,13 @@ const HomeFooter = () => {
   }, [words]);
 
   return (
-    <div className="relative overflow-hidden text-white font-ibm font-bold h-[140px]">
-      <div className="absolute w-[220px] h-[90px] bg-gradient-to-r from-bgColor via-bgColor to-transparent bottom-0 left-0 z-10" />
-      <div className="absolute w-[220px] h-[90px] bg-gradient-to-l from-bgColor via-bgColor to-transparent bottom-0 right-0 z-10" />
+    <div className="relative overflow-hidden text-white font-ibm font-bold h-[80px] sm:h-[100px] lg:h-[140px]">
+      <div className="absolute w-[150px] sm:w-[200px] lg:w-[220px] h-[60px] sm:h-[80px] lg:h-[90px] bg-gradient-to-r from-bgColor via-bgColor to-transparent bottom-0 left-0 z-10" />
+      <div className="absolute w-[150px] sm:w-[200px] lg:w-[220px] h-[60px] sm:h-[80px] lg:h-[90px] bg-gradient-to-l from-bgColor via-bgColor to-transparent bottom-0 right-0 z-10" />
 
       {words.length > 0 && (
         <div
-          className="absolute bottom-0 left-0 flex gap-20 text-[40px] opacity-30 whitespace-nowrap pb-10"
+          className="absolute bottom-0 left-0 flex gap-10 sm:gap-16 lg:gap-20 text-[28px] sm:text-[32px] lg:text-[40px] opacity-30 whitespace-nowrap pb-6 sm:pb-8 lg:pb-10"
           ref={marqueeInnerRef}
         >
           {words.map((word, i) => (
