@@ -24,9 +24,6 @@ type Quote = {
     liked_by_user?: boolean;
     saved_by_user?: boolean;
     is_community?: boolean;
-    saved_by_user?: boolean;
-    disliked_by_user?: boolean;
-    liked_by_user?: boolean;
     isCommunity?: boolean;
 };
 
@@ -295,6 +292,21 @@ const Profile = () => {
         fetchQuotes("liked", getLikedQuotes, page, prepend), [fetchQuotes]);
     const fetchDislikedQuotes = useCallback((page: number, prepend = false) =>
         fetchQuotes("disliked", getDisliked_quotes, page, prepend), [fetchQuotes]);
+
+    // ---------------- Delete Handler ----------------
+    const handleDeletePublishedQuote = useCallback(async (quoteId: number | string) => {
+        const numericId = typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
+        if (isNaN(numericId)) return;
+
+        // Note: The API call is already made in QuoteCard, we just update the UI here
+        // Remove the quote from the list
+        setPublishedQuotes((prev) => prev.filter((q) => q.id !== numericId));
+        // Update the published count
+        setpublishedCount((prev) => {
+            const count = parseInt(prev.split(" ")[0], 10) || 0;
+            return `${Math.max(0, count - 1)} Published`;
+        });
+    }, []);
 
 
     // ---------------- Restore scroll after insert/prepend ----------------
@@ -576,6 +588,8 @@ const Profile = () => {
                                             liked_by_user={quote.liked_by_user ?? false}
                                             disliked_by_user={quote.disliked_by_user ?? false}
                                             isCommunity={quote.is_community ?? true}
+                                            isOwner={true}
+                                            onDelete={handleDeletePublishedQuote}
                                         />
                                     </div>
                                 );
@@ -630,7 +644,6 @@ const Profile = () => {
                                             likes_count={quote.likes_count ?? 0}
                                             dislikes_count={quote.dislikes_count ?? 0}
                                             source={quote.quote_source ?? ""}
-                                            saved={false}
                                             liked_by_user={true}
                                             disliked_by_user={false}
                                             saved={quote.saved_by_user}
@@ -660,7 +673,6 @@ const Profile = () => {
                                             likes_count={quote.likes_count ?? 0}
                                             dislikes_count={quote.dislikes_count ?? 0}
                                             source={quote.quote_source ?? ""}
-                                            saved={false}
                                             liked_by_user={false}
                                             disliked_by_user={true}
                                             saved={quote.saved_by_user}

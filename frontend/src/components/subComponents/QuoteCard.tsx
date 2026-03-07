@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { ThumbsUp, ThumbsDown, Copy, Bookmark, BookmarkCheck } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { ThumbsUp, ThumbsDown, Copy, Bookmark, BookmarkCheck, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { likeQuote } from "../../apis/likeQuote";
@@ -7,6 +7,7 @@ import { dislikeQuote } from "../../apis/dislikeQuote";
 import { undoReaction } from "../../apis/undoReaction";
 import { saveQuote } from "../../apis/saveQuote";
 import { copyQuote } from "../../apis/copyQuote";
+import { deletePublishedQuote } from "../../apis/deletePublishedQuote";
 
 interface QuoteCardProps {
     id: number | string;
@@ -20,6 +21,8 @@ interface QuoteCardProps {
     liked_by_user?: boolean;
     disliked_by_user?: boolean;
     isCommunity?: boolean;
+    isOwner?: boolean;
+    onDelete?: (id: number | string) => void;
 }
 
 const QuoteCard: React.FC<QuoteCardProps> = ({
@@ -34,6 +37,8 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                                                  liked_by_user = false,
                                                  disliked_by_user = false,
                                                  isCommunity: isCommunityProp = false,
+                                                 isOwner = false,
+                                                 onDelete,
                                              }) => {
     const initialAction: "like" | "dislike" | null = liked_by_user
         ? "like"
@@ -47,6 +52,8 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState<boolean>(savedProp);
     const [isCommunity, setIsCommunity] = useState<boolean>(isCommunityProp);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const isDeletingRef = useRef(false);
 
     // Keep saved and isCommunity in sync if parent props change
     useEffect(() => {
@@ -136,6 +143,26 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
         }
     };
 
+    const handleDelete = async () => {
+        if (!window.confirm("Are you sure you want to delete this quote?")) {
+            return;
+        }
+        if (isDeletingRef.current) return; // Prevent duplicate requests using ref (synchronous)
+        
+        isDeletingRef.current = true;
+        setIsDeleting(true);
+        try {
+            await deletePublishedQuote(Number(id));
+            onDelete?.(id); // Notify parent first to remove the quote
+            toast.success("Quote deleted successfully");
+        } catch (err: any) {
+            toast.error(`Error: ${err?.message}`);
+        } finally {
+            isDeletingRef.current = false;
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <div className="bg-[#1D1D1D] text-white rounded-lg p-4 flex flex-col gap-2 max-w-4xl border border-[#1D1D1D]">
             <p className="text-lg italic">“{text}”</p>
@@ -184,6 +211,14 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                         size={18}
                         className="cursor-pointer hover:text-white transition-colors duration-200"
                         onClick={handleSave}
+                    />
+                )}
+
+                {isOwner && !isDeleting && (
+                    <Trash2
+                        size={18}
+                        className="cursor-pointer transition-colors duration-200 ml-auto hover:text-red-500"
+                        onClick={handleDelete}
                     />
                 )}
             </div>

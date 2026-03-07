@@ -984,6 +984,11 @@ class DeleteCommunityQuote(generics.DestroyAPIView):
         # Ensure the user can only delete their own quotes
         return CommunityQuote.objects.filter(quote_owner=user)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"success": "Quote deleted successfully"}, status=status.HTTP_200_OK)
+
 # Algorithm views
 ###
 class UserEngagementView(APIView):
