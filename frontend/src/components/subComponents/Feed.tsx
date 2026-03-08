@@ -141,7 +141,7 @@ const Feed: React.FC = () => {
           </div>
         ))
       ) : (
-        <p className="flex text-lg opacity-70 justify-center text-center mt-4">
+        <p className="flex text-lg text-white/50 justify-center text-center mt-4">
           {loading ? "Loading feed..." : "No quotes yet"}
         </p>
       )}

@@ -148,7 +148,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
             return;
         }
         if (isDeletingRef.current) return; // Prevent duplicate requests using ref (synchronous)
-        
+
         isDeletingRef.current = true;
         setIsDeleting(true);
         try {
@@ -164,12 +164,12 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
     };
 
     return (
-        <div className="bg-[#1D1D1D] text-white rounded-lg p-4 flex flex-col gap-2 max-w-4xl border border-[#1D1D1D]">
-            <p className="text-lg italic">“{text}”</p>
-            <p className="text-right text-gray-400">— {author}</p>
-            {source && <p className="text-right text-gray-400">{source}</p>}
+        <div className="bg-[#1D1D1D] text-white rounded-lg p-4 sm:p-5 flex flex-col gap-2 w-full max-w-4xl mx-auto border border-[#1D1D1D]">
+            <p className="text-base sm:text-lg italic">"{text}"</p>
+            <p className="text-right text-gray-400 text-sm sm:text-base">— {author}</p>
+            {source && <p className="text-right text-gray-400 text-sm sm:text-base">{source}</p>}
 
-            <div className="flex items-center gap-4 text-gray-400 mt-2">
+            <div className="flex items-center gap-3 sm:gap-4 text-gray-400 mt-2 flex-wrap">
                 <div
                     className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors duration-200"
                     onClick={handleLike}
@@ -179,7 +179,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                         stroke={lastAction === "like" ? "currentColor" : "gray"}
                         fill={lastAction === "like" ? "currentColor" : "none"}
                     />
-                    <span>{likes}</span>
+                    <span className="text-sm">{likes}</span>
                 </div>
 
                 <div
@@ -191,7 +191,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                         stroke={lastAction === "dislike" ? "currentColor" : "gray"}
                         fill={lastAction === "dislike" ? "currentColor" : "none"}
                     />
-                    <span>{dislikes}</span>
+                    <span className="text-sm">{dislikes}</span>
                 </div>
 
                 <Copy

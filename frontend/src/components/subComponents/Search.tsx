@@ -35,15 +35,12 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
     const removedTopPages = useRef<number[]>([]);
     const removedBottomPages = useRef<number[]>([]);
     const fetchingPages = useRef<Set<number>>(new Set());
-    // anchorRef is no longer used for measurement, but kept if you want to log it later
     const anchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
 
     const startPage = pageOrderRef.current[0] ?? null;
     const endPage = pageOrderRef.current[pageOrderRef.current.length - 1] ?? null;
 
-    // Rebuild quotes and manage the sliding window trim
     const rebuildQuotes = useCallback((direction?: "up" | "down") => {
-        // 1. Rebuild the list from the pages in memory (pagesRef)
         const ordered = pageOrderRef.current.slice().sort((a, b) => a - b);
         let all: Quote[] = [];
         for (const p of ordered) {
@@ -51,28 +48,20 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
             if (arr && arr.length) all = all.concat(arr);
         }
 
-        // 2. Maintain MAX_QUOTES sliding window
         while (all.length > MAX_QUOTES) {
             if (direction === "up") {
-                // If prepending, remove from the bottom
                 const bottomPage = ordered.pop();
                 if (!bottomPage) break;
-
                 removedBottomPages.current.push(bottomPage);
                 const removed = pagesRef.current.get(bottomPage) ?? [];
                 all = all.slice(0, all.length - removed.length);
-
                 pagesRef.current.delete(bottomPage);
-
             } else {
-                // If appending (or initial load), remove from the top
                 const topPage = ordered.shift();
                 if (!topPage) break;
-
                 removedTopPages.current.push(topPage);
                 const removed = pagesRef.current.get(topPage) ?? [];
                 all = all.slice(removed.length);
-
                 pagesRef.current.delete(topPage);
             }
         }
@@ -80,12 +69,9 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         pageOrderRef.current = ordered;
         setQuotes(all);
 
-        // 3. Simple Scroll Adjustment (The new, simpler approach)
         if (direction === "up") {
-            // Wait for the state to settle, then adjust scroll
             setTimeout(() => {
-                // Estimate content height added: CHUNK_SIZE * Estimated Card Height (e.g., 150px)
-                const estimatedHeight = CHUNK_SIZE * 50;
+                const estimatedHeight = CHUNK_SIZE * 150; // Increased estimate for card height
                 window.scrollBy(0, estimatedHeight);
             }, 0);
         }
@@ -95,7 +81,6 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         async (pageNumber: number, direction: "up" | "down") => {
             if (fetchingPages.current.has(pageNumber)) return;
 
-            // --- Chunk Restoration Logic ---
             if (pagesRef.current.has(pageNumber)) {
                 if (direction === "up" && removedTopPages.current.includes(pageNumber)) {
                     removedTopPages.current = removedTopPages.current.filter(p => p !== pageNumber);
@@ -113,8 +98,6 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
             setLoadingCount(c => c + 1);
 
             try {
-                // NOTE: Anchor capture logic for prepending removed here
-
                 const data = await searchQuotes({
                     q: query,
                     af: "",
@@ -130,11 +113,11 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
                 }
 
                 pagesRef.current.set(pageNumber, data.results);
-
                 if (direction === "up") pageOrderRef.current.unshift(pageNumber);
                 else pageOrderRef.current.push(pageNumber);
 
                 rebuildQuotes(direction);
+                if (data.total_count !== undefined) setResultsCount(data.total_count);
 
             } catch (err) {
                 console.error(err);
@@ -143,13 +126,10 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
                 setLoadingCount(c => Math.max(0, c - 1));
             }
         },
-        [query, rebuildQuotes] // Removed quotes.length dependency as it's not needed for the fetch logic
+        [query, rebuildQuotes]
     );
 
-    // useLayoutEffect removed entirely!
-
     const handleSearch = () => {
-        // Reset all state and refs for a new search
         pagesRef.current.clear();
         pageOrderRef.current = [];
         removedTopPages.current = [];
@@ -170,7 +150,6 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         handleKeyDown(e);
     };
 
-    // ------------------- Scroll Handler -------------------
     useEffect(() => {
         const tickingRef = { current: false };
 
@@ -181,16 +160,14 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
             requestAnimationFrame(() => {
                 const scrollPosition = window.innerHeight + window.scrollY;
                 const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
-                const nearBottom = scrollPosition >= scrollHeight - 200;
-                const nearTop = window.scrollY < 200;
+                const nearBottom = scrollPosition >= scrollHeight - 300;
+                const nearTop = window.scrollY < 300;
 
-                // Scroll down (Append)
                 if (nearBottom && hasMoreDown) {
                     const next = endPage !== null ? endPage + 1 : 1;
                     fetchPage(next, "down");
                 }
 
-                // Scroll up (Prepend)
                 if (nearTop && hasMoreUp) {
                     const prev = startPage !== null ? startPage - 1 : null;
                     if (prev && prev >= 1) {
@@ -205,29 +182,29 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
     }, [fetchPage, hasMoreDown, hasMoreUp, startPage, endPage]);
-    // ----------------- End Scroll Handler -----------------
-
 
     return (
-        <div className="flex flex-col items-center">
-            <div className="mt-6 flex items-center gap-2 bg-[#1D1D1D] px-4 py-2 rounded-2xl w-[800px] h-[60px]">
+        <div className="flex flex-col items-center w-full px-2 md:px-0">
+            {/* Search Input Container - Responsive Width */}
+            <div className="mt-6 flex items-center gap-2 bg-[#1D1D1D] pr-2 pl-4 py-2 rounded-2xl w-full max-w-3xl h-[60px] shadow-md border border-white/5">
                 <input
                     type="text"
                     placeholder="Search by words, author, or genre"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyPress}
-                    className="flex-1 bg-transparent outline-none text-white placeholder-gray-400 text-lg"
+                    className="flex-1 bg-transparent outline-none text-white placeholder-gray-400 text-base md:text-lg min-w-0"
                 />
                 <button
                     onClick={handleSearch}
-                    className="bg-[#9CA3AF] text-black font-bold px-4 py-1 rounded-2xl text-[20px] hover:shadow-md hover:shadow-purple-500/50 transition duration-300 ease-in"
+                    className="bg-[#9CA3AF] text-black font-bold px-4 py-1.5 rounded-xl text-sm md:text-xl hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 ease-in whitespace-nowrap active:scale-95"
                 >
                     Search
                 </button>
             </div>
 
-            <div className="mt-6 w-[800px]">
+            {/* Results Container - Responsive Width */}
+            <div className="mt-6 w-full max-w-3xl">
                 {quotes.length > 0 ? (
                     quotes.map((quote) => (
                         <div id={`quote-${quote.id}`} key={quote.id} className="mb-4">
@@ -244,13 +221,25 @@ const Search: React.FC<SearchProps> = ({ query, setQuery, handleKeyDown }) => {
                             />
                         </div>
                     ))
-                ) : query.trim() === "" || resultsCount === null ? (
-                    <p className="flex text-lg opacity-70 justify-center">Search now</p>
-                ) : resultsCount === 0 ? (
-                    <p className="flex text-lg opacity-70 justify-center">No results</p>
-                ) : null}
+                ) : (
+                    <div className="mt-20 text-center">
+                        {query.trim() === "" || resultsCount === null ? (
+                            <p className="text-lg text-white/50">Search for your favorite quotes</p>
+                        ) : resultsCount === 0 ? (
+                            <p className="text-lg text-white/50">No quotes found for "{query}"</p>
+                        ) : null}
+                    </div>
+                )}
             </div>
-            {loadingCount > 0 && <p className="text-center text-white opacity-50 mt-4">Loading more results...</p>}
+
+            {/* Loading Indicator */}
+            {loadingCount > 0 && (
+                <div className="py-8 w-full flex justify-center">
+                    <div className="animate-pulse text-white/40 font-medium">
+                        Fetching more quotes...
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

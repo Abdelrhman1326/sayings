@@ -46,9 +46,9 @@ const Browse = () => {
       </div>
 
       {/* navigation */}
-      <div className="flex flex-col text-white w-full items-center mt-[120px]">
+      <div className="flex flex-col text-white w-full items-center mt-[120px] px-2">
         {/* Tabs */}
-        <div className="flex flex-row gap-4 text-[26px]">
+        <div className="flex flex-row md:gap-6 gap-0 md:text-[26px] sm:text-[22px]">
           {tabs.map((tab) => (
             <p
               key={tab}

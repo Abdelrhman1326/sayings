@@ -179,7 +179,7 @@ const Community: React.FC = () => {
             )
         )}
         {quotes.length === 0 && !loading && (
-            <p className="flex text-lg opacity-70 justify-center text-center mt-4">
+            <p className="flex text-lg text-white/50 justify-center text-center mt-4">
               No quotes yet
             </p>
         )}
