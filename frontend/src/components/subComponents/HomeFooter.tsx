@@ -48,7 +48,7 @@ const HomeFooter = () => {
       { x: 150 },
       {
         x: -width / 2,
-        duration: 100,
+        duration: 50,
         ease: "linear",
         repeat: -1,
       }
