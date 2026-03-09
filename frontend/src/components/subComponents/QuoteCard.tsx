@@ -89,40 +89,87 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
     };
 
     const handleLike = async () => {
+        const originalAction = lastAction;
+        const originalLikes = likes;
+        const originalDislikes = dislikes;
+
         try {
-            let response;
+            // optimistic update
             if (lastAction === "like") {
-                response = await undoReaction(Number(id), "like", isCommunity);
                 setLastAction(null);
+                setLikes(prev => Math.max(prev - 1, 0));
+            }
+            else if (lastAction === "dislike") {
+                setLastAction("like");
+                setLikes(prev => prev + 1);
+                setDislikes(prev => Math.max(prev - 1, 0));
+            }
+            else {
+                setLastAction("like");
+                setLikes(prev => prev + 1);
+            }
+
+            let response;
+            if (originalAction === "like") {
+                response = await undoReaction(Number(id), "like", isCommunity);
             } else {
                 response = await likeQuote(Number(id), isCommunity);
-                setLastAction("like");
             }
+
+            // sync with server
             setLikes(response.likes_count);
             setDislikes(response.dislikes_count);
-            setError(null);
+
         } catch (err: any) {
+            // rollback
+            setLastAction(originalAction);
+            setLikes(originalLikes);
+            setDislikes(originalDislikes);
             setError(err.message);
-            toast.error("Error liking quote");
         }
     };
 
     const handleDislike = async () => {
+        const originalAction = lastAction;
+        const originalLikes = likes;
+        const originalDislikes = dislikes;
+
         try {
-            let response;
+            // optimistic update
             if (lastAction === "dislike") {
-                response = await undoReaction(Number(id), "dislike", isCommunity);
                 setLastAction(null);
+                setDislikes(prev => Math.max(prev - 1, 0));
+            }
+            else if (lastAction === "like") {
+                setLastAction("dislike");
+                setLikes(prev => Math.max(prev - 1, 0));
+                setDislikes(prev => prev + 1);
+            }
+            else {
+                setLastAction("dislike");
+                setDislikes(prev => prev + 1);
+            }
+
+            let response;
+            if (originalAction === "dislike") {
+                response = await undoReaction(Number(id), "dislike", isCommunity);
             } else {
                 response = await dislikeQuote(Number(id), isCommunity);
-                setLastAction("dislike");
             }
+
+            // sync with backend
             setLikes(response.likes_count);
             setDislikes(response.dislikes_count);
             setError(null);
+
         } catch (err: any) {
+            // rollback optimistic update
+            setLastAction(originalAction);
+            setLikes(originalLikes);
+            setDislikes(originalDislikes);
+
             setError(err.message);
-            toast.error("Error disliking quote");
+            // toast.error("Error disliking quote");
         }
     };
 
