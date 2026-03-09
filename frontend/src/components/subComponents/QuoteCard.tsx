@@ -72,7 +72,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
 
     const processCopyInBackend = async () => {
         try {
-            await copyQuote(Number(id), isCommunity);
+            await copyQuote(Number(id));
         } catch (err: any) {
             console.error("Error processing copy action:", err?.message || err);
         }
@@ -116,10 +116,6 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                 response = await likeQuote(Number(id), isCommunity);
             }
 
-            // sync with server
-            setLikes(response.likes_count);
-            setDislikes(response.dislikes_count);
-
         } catch (err: any) {
             // rollback
             setLastAction(originalAction);
@@ -157,11 +153,6 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                 response = await dislikeQuote(Number(id), isCommunity);
             }
 
-            // sync with backend
-            setLikes(response.likes_count);
-            setDislikes(response.dislikes_count);
-            setError(null);
-
         } catch (err: any) {
             // rollback optimistic update
             setLastAction(originalAction);
@@ -174,19 +165,29 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
     };
 
     const handleSave = async () => {
+        const originalState = saved;
+
         try {
+            // optimistic update
+            setSaved(!saved);
+
             const response: any = await saveQuote(Number(id), isCommunity);
             const message = response.message;
+
             if (message === "Quote saved" || message === "Community quote saved") {
                 setSaved(true);
-                toast.success("Saved");
-            } else if (message === "Quote unsaved" || message === "Community quote unsaved") {
+                // toast.success("Saved");
+            }
+            else if (message === "Quote unsaved" || message === "Community quote unsaved") {
                 setSaved(false);
-                toast.success("Unsaved");
+                // toast.success("Unsaved");
                 onUnsave?.(id);
             }
+
         } catch (err: any) {
-            toast.error(`Error: ${err?.message}`);
+            // rollback
+            setSaved(originalState);
+            // toast.error(`Error: ${err?.message}`);
         }
     };
 
