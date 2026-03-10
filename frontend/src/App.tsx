@@ -38,7 +38,7 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="*" element={<NotFound />} /> 
+        <Route path="*" element={<NotFound />} />
         <Route path="/" element={isAuthenticated ? <Navigate to="/browse" replace /> : <Navigate to="/home" replace />} />
         <Route path="/login" element={<AntiProtectedRoute><Login /></AntiProtectedRoute>} />
         <Route path="/signup" element={<AntiProtectedRoute><Signup /></AntiProtectedRoute>} />

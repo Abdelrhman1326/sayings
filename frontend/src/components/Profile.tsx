@@ -186,7 +186,6 @@ const Profile = () => {
 
         setListQuotes((prev) => {
             let updated = prepend ? [...data, ...prev] : [...prev, ...data];
-            // Simplified chunking logic based on your previous implementation
             if (!prepend && updated.length > 2 * CHUNK_SIZE) updated = updated.slice(CHUNK_SIZE);
             if (prepend && updated.length > 100) updated = updated.slice(0, 100);
             return updated;
@@ -259,7 +258,7 @@ const Profile = () => {
                 const response = await fetchApi(page, CHUNK_SIZE);
                 const data = normalizeResponse(response);
 
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced fake delay slightly
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 if (!data || data.length === 0) {
                     const setListHasMore =
@@ -283,7 +282,6 @@ const Profile = () => {
         [publishedHasMore, savedHasMore, likedHasMore, dislikedHasMore, publishedQuotes, savedQuotes, likedQuotes, dislikedQuotes]
     );
 
-    // Specific fetch functions using the generic one
     const fetchPublishedQuotes = useCallback((page: number, prepend = false) =>
         fetchQuotes("published", getPublishedQuotes, page, prepend), [fetchQuotes]);
     const fetchSavedQuotes = useCallback((page: number, prepend = false) =>
@@ -298,16 +296,12 @@ const Profile = () => {
         const numericId = typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
         if (isNaN(numericId)) return;
 
-        // Note: The API call is already made in QuoteCard, we just update the UI here
-        // Remove the quote from the list
         setPublishedQuotes((prev) => prev.filter((q) => q.id !== numericId));
-        // Update the published count
         setpublishedCount((prev) => {
             const count = parseInt(prev.split(" ")[0], 10) || 0;
             return `${Math.max(0, count - 1)} Published`;
         });
     }, []);
-
 
     // ---------------- Restore scroll after insert/prepend ----------------
     useLayoutEffect(() => {
@@ -418,7 +412,6 @@ const Profile = () => {
                 const response = await getPublishedCount();
                 let count: number | null = null;
 
-                // Assuming the API returns the count directly or nested in a 'count' or 'data.count' field.
                 if (typeof response === 'number') {
                     count = response;
                 } else if (response && typeof response.count === 'number') {
@@ -426,7 +419,6 @@ const Profile = () => {
                 } else if (response && response.data && typeof response.data.count === 'number') {
                     count = response.data.count;
                 } else if (response && typeof response.detail === 'string' && response.detail.includes("not provided")) {
-                    // Handle 401 error or other structured error gracefully
                     console.warn("Authentication required for published count, defaulting to 0.");
                     count = 0;
                 }
@@ -443,8 +435,7 @@ const Profile = () => {
         };
 
         fetchPublishedCount();
-    }, []); // Empty dependency array means this runs once on mount.
-    // ---------------- END PUBLISHED COUNT LOGIC ----------------
+    }, []);
 
     // --- LOGIC TO FORCE REFETCH ON TAB CHANGE ---
     useEffect(() => {
@@ -457,21 +448,15 @@ const Profile = () => {
             fetchFunc: (page: number) => void,
             didInitRefKey: "published" | "saved" | "liked" | "disliked"
         ) => {
-            // **CRITICAL: Reset data and pagination state to force a new load**
-            setData([]); // Clear the current list
-            setHasMore(true); // Reset hasMore flag
-            setLatestRemoved(null); // Clear removed page tracker
-            setPageRef.current = 1; // Reset page ref
-            setPage(1); // Reset page state
-
-            // Reset initialization guard to ensure fetch runs again immediately
+            setData([]);
+            setHasMore(true);
+            setLatestRemoved(null);
+            setPageRef.current = 1;
+            setPage(1);
             didInitRef.current[didInitRefKey] = false;
-
-            // Trigger the initial fetch (which uses the reset state)
             fetchFunc(1);
         };
 
-        // Use requestAnimationFrame to allow React to process the state change from setActiveTab first
         const timer = requestAnimationFrame(() => {
             switch (activeTab) {
                 case "Published Quotes":
@@ -487,14 +472,12 @@ const Profile = () => {
                     }
                     break;
                 case "Liked":
-                    // FORCE REFETCH
                     resetAndFetch(
                         setLikedQuotes, setLikedHasMore, setLikedLatestRemoved,
                         likedPageRef, setLikedPage, fetchLikedQuotes, "liked"
                     );
                     break;
                 case "Disliked":
-                    // FORCE REFETCH
                     resetAndFetch(
                         setDislikedQuotes, setDislikedHasMore, setDislikedLatestRemoved,
                         dislikedPageRef, setDislikedPage, fetchDislikedQuotes, "disliked"
@@ -516,14 +499,12 @@ const Profile = () => {
                 </div>
 
                 {/* Exposure Bar */}
-                <div className="flex pl-32 pr-32 mt-[140px]">
-                    <div
-                        className="flex flex-row items-center p-4 w-full h-40 rounded-full text-black bg-gradient-to-r from-uiPrimary via-violet-400 to-violet-500"
-                    >
+                <div className="flex px-4 sm:px-8 md:px-16 lg:px-32 mt-[100px] sm:mt-[120px] md:mt-[140px]">
+                    <div className="flex flex-row items-center p-3 sm:p-4 w-full min-h-[5rem] sm:h-32 md:h-40 rounded-full text-black bg-gradient-to-r from-uiPrimary via-violet-400 to-violet-500">
                         {/* profile picture */}
                         <div
                             style={{ backgroundColor: textColor }}
-                            className="flex items-center justify-center w-32 h-32 rounded-full text-[46px]"
+                            className="flex-shrink-0 flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 md:w-32 md:h-32 rounded-full"
                         >
                             {username.trim() !== "" ? (
                                 <p
@@ -531,32 +512,30 @@ const Profile = () => {
                                     style={{
                                         backgroundColor: getColor(username[0]?.toUpperCase() ?? "G"),
                                     }}
-                                    className="w-28 h-28 flex items-center justify-center rounded-full font-ibm font-bold text-[50px]"
+                                    className="w-12 h-12 sm:w-16 sm:h-16 md:w-28 md:h-28 flex items-center justify-center rounded-full font-ibm font-bold text-xl sm:text-3xl md:text-[50px]"
                                 >
                                     {username[0]?.toUpperCase() ?? "U"}
                                 </p>
                             ) : (
-                                <CircleUserRound size={30} style={{ marginBottom: "2px" }} />
+                                <CircleUserRound size={24} style={{ marginBottom: "2px" }} />
                             )}
                         </div>
 
                         {/* username + info */}
-                        <div className="flex flex-col ml-6 font-ibm font-bold">
-                            <h1 className="text-[28px]">{username}</h1>
-                            <h2>{publishedCount}</h2>
-                            {/*<h3>{`${followers} followers`}</h3>*/}
-                            {/*<h3>{`${following} following`}</h3>*/}
+                        <div className="flex flex-col ml-3 sm:ml-4 md:ml-6 font-ibm font-bold min-w-0">
+                            <h1 className="text-base sm:text-xl md:text-[28px] truncate">{username}</h1>
+                            <h2 className="text-sm sm:text-base md:text-lg">{publishedCount}</h2>
                         </div>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex flex-row justify-center mt-8 gap-4 text-[26px]">
+                <div className="flex flex-row justify-start sm:justify-center mt-6 sm:mt-8 gap-2 sm:gap-3 md:gap-4 text-base sm:text-xl md:text-[26px] px-4 sm:px-0 overflow-x-auto pb-2 scrollbar-hide">
                     {tabs.map((tab) => (
                         <p
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`py-1 px-5 rounded-full font-ibm font-bold cursor-pointer transition-colors duration-300 ${
+                            className={`py-1 px-3 sm:px-4 md:px-5 rounded-full font-ibm font-bold cursor-pointer transition-colors duration-300 whitespace-nowrap flex-shrink-0 ${
                                 activeTab === tab ? "bg-uiPrimary text-black" : "bg-transparent text-white"
                             }`}
                         >
@@ -567,12 +546,12 @@ const Profile = () => {
             </div>
 
             {/* Quote List Views */}
-            <div className="p-8 text-white flex justify-center">
+            <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-8 text-white flex justify-center">
                 {activeTab === "Published Quotes" && (
                     publishedQuotes.length === 0 && publishedLoading === false ? (
                         <p className="text-lg opacity-70">No published quotes yet.</p>
                     ) : (
-                        <div className="flex flex-col gap-4 w-[800px] mb-12">
+                        <div className="flex flex-col gap-4 w-full max-w-[800px] mb-12">
                             {publishedQuotes.map((quote, idx) => {
                                 const id = quote.id ?? `pub-${idx}`;
                                 return (
@@ -603,7 +582,7 @@ const Profile = () => {
                     savedQuotes.length === 0 && savedLoading === false ? (
                         <p className="text-lg opacity-70">No saved quotes yet.</p>
                     ) : (
-                        <div className="flex flex-col gap-4 w-[800px] mb-12">
+                        <div className="flex flex-col gap-4 w-full max-w-[800px] mb-12">
                             {savedQuotes.map((quote, idx) => {
                                 const id = quote.id ?? `save-${idx}`;
                                 return (
@@ -632,7 +611,7 @@ const Profile = () => {
                     likedQuotes.length === 0 && likedLoading === false ? (
                         <p className="text-lg opacity-70">No liked quotes yet.</p>
                     ) : (
-                        <div className="flex flex-col gap-4 w-[800px] mb-12">
+                        <div className="flex flex-col gap-4 w-full max-w-[800px] mb-12">
                             {likedQuotes.map((quote, idx) => {
                                 const id = quote.id ?? `liked-${idx}`;
                                 return (
@@ -661,7 +640,7 @@ const Profile = () => {
                     dislikedQuotes.length === 0 && dislikedLoading === false ? (
                         <p className="text-lg opacity-70">No disliked quotes yet.</p>
                     ) : (
-                        <div className="flex flex-col gap-4 w-[800px] mb-12">
+                        <div className="flex flex-col gap-4 w-full max-w-[800px] mb-12">
                             {dislikedQuotes.map((quote, idx) => {
                                 const id = quote.id ?? `disliked-${idx}`;
                                 return (
