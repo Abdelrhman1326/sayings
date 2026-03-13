@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 SECRET_KEY = config("SECRET_KEY")  # from .env
 DEBUG = config("DEBUG", default=True, cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=lambda v: [s.strip() for s in v.split(",")])
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1,sayings-quotes.vercel.app", cast=lambda v: [s.strip() for s in v.split(",")])
 
 # Application definition
 INSTALLED_APPS = [
@@ -46,12 +46,12 @@ MIDDLEWARE = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:5173,http://127.0.0.1:5173,https://sayings-one.vercel.app",
+    default="http://localhost:5173,http://127.0.0.1:5173,https://sayings-quotes.vercel.app,https://sayings-quotes.vercel.app/",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="http://localhost:5173,http://127.0.0.1:5173,https://sayings-one.vercel.app",
+    default="http://localhost:5173,http://127.0.0.1:5173,https://sayings-quotes.vercel.app,https://sayings-quotes.vercel.app/",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
