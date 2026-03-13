@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Header from "./Header";
 
-import { searchQuotes } from "../apis/searchApi";
 import Search from "./subComponents/Search";
 import Community from "./subComponents/Community";
 import Feed from "./subComponents/Feed";
@@ -12,7 +11,7 @@ const Browse = () => {
 
   const tabs = ["Feed", "Community", "Search"];
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {
     // If we wanted global hotkey handling, we could put it here.
   };
 

@@ -29,16 +29,12 @@ type Quote = {
 
 const Profile = () => {
     const [username, setUsername] = useState<string>("");
-    const [textColor, setTextColor] = useState("black");
-    const [followers, setFollowers] = useState<number>(0);
-    const [following, setFollowing] = useState<number>(0);
+    const textColor = "black";
     const [publishedCount, setpublishedCount] = useState<string>("");
-    const [editIconHovered, setEditIconHovered] = useState<boolean>(false);
 
     // ---------------- Published Quotes State ----------------
     const [publishedQuotes, setPublishedQuotes] = useState<Quote[]>([]);
     const [publishedHasMore, setPublishedHasMore] = useState(true);
-    const [publishedLatestRemoved, setPublishedLatestRemoved] = useState<number | null>(null);
     const [_publishedPage, _setPublishedPage] = useState(1);
     const publishedPageRef = useRef(1);
     const publishedAnchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
@@ -46,7 +42,6 @@ const Profile = () => {
     // ---------------- Saved Quotes State ----------------
     const [savedQuotes, setSavedQuotes] = useState<Quote[]>([]);
     const [savedHasMore, setSavedHasMore] = useState(true);
-    const [savedLatestRemoved, setSavedLatestRemoved] = useState<number | null>(null);
     const [_savedPage, _setSavedPage] = useState(1);
     const savedPageRef = useRef(1);
     const savedAnchorRef = useRef<{ id: number | null; top: number }>({ id: null, top: 0 });
@@ -155,7 +150,7 @@ const Profile = () => {
     const manageListUpdate = (
         listType: "published" | "saved" | "liked" | "disliked",
         data: Quote[],
-        page: number,
+        _page: number,
         prepend: boolean
     ) => {
         const setListQuotes =
@@ -352,10 +347,10 @@ const Profile = () => {
 
                 switch (activeTab) {
                     case "Published Quotes":
-                        checkScroll(publishedHasMore, publishedPageRef, publishedLatestRemoved, publishedLoadingRef, fetchPublishedQuotes);
+                        checkScroll(publishedHasMore, publishedPageRef, null, publishedLoadingRef, fetchPublishedQuotes);
                         break;
                     case "Saved Quotes":
-                        checkScroll(savedHasMore, savedPageRef, savedLatestRemoved, savedLoadingRef, fetchSavedQuotes);
+                        checkScroll(savedHasMore, savedPageRef, null, savedLoadingRef, fetchSavedQuotes);
                         break;
                     case "Liked":
                         checkScroll(likedHasMore, likedPageRef, likedLatestRemoved, likedLoadingRef, fetchLikedQuotes);
@@ -391,7 +386,7 @@ const Profile = () => {
                     setUsername("");
                     return;
                 }
-                const usernameFromResp = response?.username ?? response?.data?.username;
+                const usernameFromResp = response?.username;
                 if (usernameFromResp) {
                     const cleanedUsername = usernameFromResp.trim();
                     setUsername(cleanedUsername);
