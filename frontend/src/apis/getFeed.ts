@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getCookie } from "./cookies";
+import { API_BASE } from './apiConfig';
 
 // Cursor info sent to the backend
 export interface FeedCursor {
@@ -30,7 +31,7 @@ export const getFeed = async (
   try {
     const csrfToken = getCookie("csrftoken");
 
-    const response = await axios.get("/apis/quotes/feed/", {
+    const response = await axios.get(`${API_BASE}/quotes/feed/`, {
       params: cursor, // last_score, last_id, limit if provided
       withCredentials: true,
       headers: {

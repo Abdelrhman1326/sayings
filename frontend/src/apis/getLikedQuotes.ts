@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { API_BASE } from './apiConfig';
 
 export const getLikedQuotes = async (page:number = 1, limit:number = 50) => {
     try {
         const response = await axios.get(
-            `/apis/quotes/liked_quotes/`,
+            `${API_BASE}/quotes/liked_quotes/`,
                 {
                     params: {
                         page: page,

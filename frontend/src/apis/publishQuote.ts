@@ -1,12 +1,13 @@
 import axios from "axios";
 import { getCookie } from "./cookies";
+import { API_BASE } from './apiConfig';
 
 export const publish = async ({ text, genre }: { text: string; genre: string }) => {
     try {
         const csrfToken = getCookie("csrftoken");
 
         const response = await axios.post(
-            "/apis/community_quotes/publish/",
+            `${API_BASE}/community_quotes/publish/`,
             {
                 quote_genre: genre,
                 quote_text: text,

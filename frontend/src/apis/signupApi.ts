@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
+import { API_BASE } from './apiConfig';
 
-const SIGNUPAPI = 'http://127.0.0.1:8000/apis/signup/';
+const SIGNUPAPI = `${API_BASE}/signup/`;
 
 export const signup = async (signupData: any) => {
   try {

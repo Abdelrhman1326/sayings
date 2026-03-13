@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_BASE } from './apiConfig';
 
 export interface Quote {
   id: number;
@@ -9,7 +10,7 @@ export interface Quote {
 
 export const getRandomQuote = async (): Promise<Quote> => {
   try {
-    const response = await axios.get<Quote>('/apis/quotes/random_quote/', { withCredentials: true });
+    const response = await axios.get<Quote>(`${API_BASE}/quotes/random_quote/`, { withCredentials: true });
     return response.data;
   } catch (error) {
     console.error('Error fetching random quote:', error);

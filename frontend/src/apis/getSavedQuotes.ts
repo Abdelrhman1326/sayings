@@ -1,11 +1,12 @@
 import axios from "axios";
 import { getCookie } from "./cookies";
+import { API_BASE } from './apiConfig';
 
 export const getSavedQuotes = async (page = 1, limit = 50) => {
     try {
         const csrfToken = getCookie("csrftoken");
         const response = await axios.get(
-            `/apis/quotes/saved_quotes/`,
+            `${API_BASE}/quotes/saved_quotes/`,
             {
                 params: {
                     page: page,

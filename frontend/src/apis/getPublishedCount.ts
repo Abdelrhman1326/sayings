@@ -1,12 +1,13 @@
 import axios from "axios";
 import { getCookie } from "./cookies";
+import { API_BASE } from './apiConfig';
 
 export const getPublishedCount = async () => {
     try {
         const csrfToken = getCookie("csrftoken");
 
         const response = await axios.get(
-            "/apis/users/published/count/",
+            `${API_BASE}/users/published/count/`,
             {
                 withCredentials: true,
                 headers: {

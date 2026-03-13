@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
+import { API_BASE } from './apiConfig';
 
 export const getQuoteReactionStatus = async (quote_id: number) => {
     try {
         const csrfToken = getCookie('csrftoken');
-        const response = await axios.get(`/apis/quotes/${quote_id}/reaction-status/`, {
+        const response = await axios.get(`${API_BASE}/quotes/${quote_id}/reaction-status/`, {
             withCredentials: true,
             headers: {
                 'Content-Type': 'application/json',

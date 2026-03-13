@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
+import { API_BASE } from './apiConfig';
 
 export const likeQuote = async (quote_id: number, isCommunity: boolean = false) => {
     const URL = isCommunity
-        ? `/apis/community_quotes/${quote_id}/like/`
-        : `/apis/quotes/${quote_id}/like/`;
+        ? `${API_BASE}/community_quotes/${quote_id}/like/`
+        : `${API_BASE}/quotes/${quote_id}/like/`;
 
     try {
         const csrfToken = getCookie('csrftoken');

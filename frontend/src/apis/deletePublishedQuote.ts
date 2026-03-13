@@ -1,12 +1,13 @@
 import axios from "axios";
 import { getCookie } from "./cookies";
+import { API_BASE } from './apiConfig';
 
 export const deletePublishedQuote = async (quoteId: number) => {
     try {
         const csrfToken = getCookie("csrftoken");
 
         const response = await axios.delete(
-            `/apis/community_quotes/delete/${quoteId}/`,
+            `${API_BASE}/community_quotes/delete/${quoteId}/`,
             {
                 withCredentials: true,
                 headers: {

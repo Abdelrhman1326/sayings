@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API_BASE } from './apiConfig';
 
-const LOGOUT_API = 'http://127.0.0.1:8000/apis/logout/';
+const LOGOUT_API = `${API_BASE}/logout/`;
 import { getCookie } from './cookies';
 
 export const logout = async () => {

@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
+import { API_BASE } from './apiConfig';
 
 export const getUsername = async () => {
     try {
         const csrftoken = getCookie('csrftoken');
-        const response = await axios.get(`/apis/users/username`, {
+        const response = await axios.get(`${API_BASE}/users/username`, {
             withCredentials: true,
             headers: {
                 'Content-Type': 'application/json',

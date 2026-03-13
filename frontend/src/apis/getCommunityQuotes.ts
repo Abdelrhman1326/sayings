@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
+import { API_BASE } from './apiConfig';
 
 interface PaginationParameters {
     limit?: number;   // default 50
@@ -14,7 +15,7 @@ export const getCommunityQuotes = async (params: PaginationParameters) => {
     try {
         const csrfToken = getCookie('csrftoken');
 
-        const response = await axios.get("http://127.0.0.1:8000/apis/community_quotes/community/", {
+        const response = await axios.get(`${API_BASE}/community_quotes/community/`, {
             params: {
                 limit: params.limit || 50,
                 page: params.page || 1,

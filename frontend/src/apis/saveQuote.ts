@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
+import { API_BASE } from './apiConfig';
 
 export const saveQuote = async (quote_id: number, isCommunity: boolean = false): Promise<any> => {
     const URL = isCommunity
-        ? `/apis/community_quotes/${quote_id}/save/`
-        : `/apis/quotes/save_quote/${quote_id}/`;
+        ? `${API_BASE}/community_quotes/${quote_id}/save/`
+        : `${API_BASE}/quotes/save_quote/${quote_id}/`;
 
     try {
         const csrfToken = getCookie('csrftoken');

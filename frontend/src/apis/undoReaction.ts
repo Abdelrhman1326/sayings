@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
+import { API_BASE } from './apiConfig';
 
 export const undoReaction = async (
     quote_id: number,
@@ -11,8 +12,8 @@ export const undoReaction = async (
 
         // Use isCommunity boolean to switch URL
         const url = isCommunity
-            ? `/apis/community_quotes/undo/${action}/${quote_id}/`
-            : `/apis/quotes/undo/${action}/${quote_id}/`;
+            ? `${API_BASE}/community_quotes/undo/${action}/${quote_id}/`
+            : `${API_BASE}/quotes/undo/${action}/${quote_id}/`;
 
         const response = await axios.post(
             url,

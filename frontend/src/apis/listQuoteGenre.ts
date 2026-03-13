@@ -1,8 +1,9 @@
 import axios from "axios";
+import { API_BASE } from './apiConfig';
 
 export const getQuoteGenres = async () => {
   try {
-    const response = await axios.get("/apis/quotes/listgenres/", {
+    const response = await axios.get(`${API_BASE}/quotes/listgenres/`, {
       withCredentials: true,
     });
     return response.data;
