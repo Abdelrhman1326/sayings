@@ -46,12 +46,12 @@ MIDDLEWARE = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:5173,http://127.0.0.1:5173",
+    default="http://localhost:5173,http://127.0.0.1:5173,https://sayings-one.vercel.app",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="http://localhost:5173,http://127.0.0.1:5173",
+    default="http://localhost:5173,http://127.0.0.1:5173,https://sayings-one.vercel.app",
     cast=lambda v: [s.strip() for s in v.split(",")]
 )
 
