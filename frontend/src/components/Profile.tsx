@@ -368,7 +368,7 @@ const Profile = () => {
         return () => window.removeEventListener("scroll", onScroll);
     }, [
         activeTab, publishedHasMore, savedHasMore, likedHasMore, dislikedHasMore,
-        publishedLatestRemoved, savedLatestRemoved, likedLatestRemoved, dislikedLatestRemoved,
+        likedLatestRemoved, dislikedLatestRemoved,
         fetchPublishedQuotes, fetchSavedQuotes, fetchLikedQuotes, fetchDislikedQuotes,
     ]);
 

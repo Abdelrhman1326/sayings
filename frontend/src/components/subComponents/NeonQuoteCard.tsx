@@ -20,7 +20,6 @@ interface QuoteCardProps {
   lastAction?: "like" | "dislike" | null;
   onLike?: () => void;
   onDislike?: () => void;
-  onUndoReaction?: (type: "like" | "dislike") => void;
 }
 
 const NeonQuoteCard: React.FC<QuoteCardProps> = ({
@@ -35,7 +34,6 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
   lastAction: lastActionProp,
   onLike,
   onDislike,
-  onUndoReaction,
 }) => {
   const [likes, setLikes] = useState(likes_count ?? 0);
   const [dislikes, setDislikes] = useState(dislikes_count ?? 0);
@@ -85,10 +83,10 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
     try {
       let response;
       if (lastAction === "like") {
-        response = await undoReaction(id, "like");
+        response = await undoReaction(Number(id), "like");
         setLastAction(null);
       } else {
-        response = await likeQuote(id);
+        response = await likeQuote(Number(id));
         setLastAction("like");
       }
       setLikes(response.likes_count);
@@ -108,10 +106,10 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
     try {
       let response;
       if (lastAction === "dislike") {
-        response = await undoReaction(id, "dislike");
+        response = await undoReaction(Number(id), "dislike");
         setLastAction(null);
       } else {
-        response = await dislikeQuote(id);
+        response = await dislikeQuote(Number(id));
         setLastAction("dislike");
       }
       setLikes(response.likes_count);
@@ -125,7 +123,7 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
 
   const handleSave = async () => {
     try {
-      const response: any = await saveQuote(id);
+      const response: any = await saveQuote(Number(id));
       const message = response.data.message;
 
       if (message === "Quote saved") {

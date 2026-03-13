@@ -11,6 +11,19 @@ type MultiselectInputProps = {
   onChange?: (selected: Option | null) => void
 }
 
+const sampleOptions: Option[] = [
+  { value: "motivation", label: "Motivational" },
+  { value: "love", label: "Love & Relationships" },
+  { value: "wisdom", label: "Wisdom" },
+  { value: "humor", label: "Humor" },
+  { value: "inspiration", label: "Inspiration" },
+  { value: "life", label: "Life Lessons" },
+  { value: "success", label: "Success" },
+  { value: "friendship", label: "Friendship" },
+  { value: "dreams", label: "Dreams & Goals" },
+  { value: "happiness", label: "Happiness" },
+]
+
 export default function MultiselectInput({
   options,
   placeholder = "Select a genre",
@@ -32,25 +45,10 @@ export default function MultiselectInput({
     setIsOpen(false) // close dropdown after choosing
   }
 
-  const filteredOptions = options.filter((o) =>
+  const baseOptions = options.length > 0 ? options : sampleOptions;
+  const filteredOptions = baseOptions.filter((o) =>
     o.label.toLowerCase().includes(search.toLowerCase())
   )
-
-  // Sample data for demonstration
-  const sampleOptions: Option[] = [
-    { value: "motivation", label: "Motivational" },
-    { value: "love", label: "Love & Relationships" },
-    { value: "wisdom", label: "Wisdom" },
-    { value: "humor", label: "Humor" },
-    { value: "inspiration", label: "Inspiration" },
-    { value: "life", label: "Life Lessons" },
-    { value: "success", label: "Success" },
-    { value: "friendship", label: "Friendship" },
-    { value: "dreams", label: "Dreams & Goals" },
-    { value: "happiness", label: "Happiness" },
-  ]
-
-  const displayOptions = options.length > 0 ? options : sampleOptions
 
   return (
     <div className="relative w-full max-w-md">

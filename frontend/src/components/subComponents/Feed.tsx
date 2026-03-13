@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import QuoteCard from "./QuoteCard";
-import { toast } from "react-toastify";
 import { getFeed } from "../../apis/getFeed";
 
 interface Quote {
