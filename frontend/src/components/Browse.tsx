@@ -6,36 +6,14 @@ import Search from "./subComponents/Search";
 import Community from "./subComponents/Community";
 import Feed from "./subComponents/Feed";
 
-interface Quote {
-  id: number;
-  quote_text: string;
-  quote_author: string;
-  likes_count: number | null;
-  dislikes_count: number | null;
-  quote_source: string;
-}
-
 const Browse = () => {
   const [activeTab, setActiveTab] = useState("Feed");
-  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [query, setQuery] = useState("");
 
   const tabs = ["Feed", "Community", "Search"];
 
-  const handleSearchQueries = async () => {
-    if (!query.trim()) return; // prevent empty searches
-    try {
-      const response = await searchQuotes({ q: query, af: "", gf: [] });
-      setQuotes(response.results || []); // grab results array
-    } catch (error) {
-      console.error("Search error:", error);
-    }
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSearchQueries();
-    }
+    // If we wanted global hotkey handling, we could put it here.
   };
 
   return (
@@ -71,8 +49,6 @@ const Browse = () => {
             query={query}
             setQuery={setQuery}
             handleKeyDown={handleKeyDown}
-            handleSearchQueries={handleSearchQueries}
-            quotes={quotes}
           />
         )}
 

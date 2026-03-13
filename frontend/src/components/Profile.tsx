@@ -1,5 +1,5 @@
 import Header from "./Header";
-import { CircleUserRound, EditIcon } from "lucide-react";
+import { CircleUserRound } from "lucide-react";
 import { getUsername } from "../apis/getUsername";
 import { useState, useLayoutEffect, useEffect, useRef, useCallback } from "react";
 import { getColor } from "./ui/ProfileIconColor";
@@ -29,7 +29,6 @@ type Quote = {
 
 const Profile = () => {
     const [username, setUsername] = useState<string>("");
-    const [barColor, setBarColor] = useState<string>("#D2BCFF");
     const [textColor, setTextColor] = useState("black");
     const [followers, setFollowers] = useState<number>(0);
     const [following, setFollowing] = useState<number>(0);

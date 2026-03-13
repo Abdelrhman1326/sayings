@@ -26,7 +26,7 @@ const LuckyQuote = () => {
         const data = await getRandomQuote();
         if (data) {
           setQuote(data.quote_text || "No quote available");
-          setAuthor(data.quote_author || "Unknown");
+          setAuthor(data.author || "Unknown");
           setQuoteId(data.id);
           if (data.id) {
             const reactionStatus = await getQuoteReactionStatus(data.id);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Copy, Bookmark, BookmarkCheck } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -14,9 +14,13 @@ interface QuoteCardProps {
   author: string;
   likes_count: number | null;
   dislikes_count: number | null;
-  source: string;
+  source?: string;
   saved?: boolean;
   onUnsave?: (id: number | string) => void;
+  lastAction?: "like" | "dislike" | null;
+  onLike?: () => void;
+  onDislike?: () => void;
+  onUndoReaction?: (type: "like" | "dislike") => void;
 }
 
 const NeonQuoteCard: React.FC<QuoteCardProps> = ({
@@ -28,12 +32,31 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
   source = "",
   saved: savedProp = false,
   onUnsave,
+  lastAction: lastActionProp,
+  onLike,
+  onDislike,
+  onUndoReaction,
 }) => {
   const [likes, setLikes] = useState(likes_count ?? 0);
   const [dislikes, setDislikes] = useState(dislikes_count ?? 0);
   const [lastAction, setLastAction] = useState<"like" | "dislike" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<boolean>(savedProp);
+
+  // Sync state with props if provided
+  useEffect(() => {
+    setLikes(likes_count ?? 0);
+  }, [likes_count]);
+
+  useEffect(() => {
+    setDislikes(dislikes_count ?? 0);
+  }, [dislikes_count]);
+
+  useEffect(() => {
+    if (lastActionProp !== undefined) {
+      setLastAction(lastActionProp);
+    }
+  }, [lastActionProp]);
 
     const processCopyInBackend = async () => {
       try {
@@ -55,6 +78,10 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
   };
 
   const handleLike = async () => {
+    if (onLike) {
+        onLike();
+        return;
+    }
     try {
       let response;
       if (lastAction === "like") {
@@ -74,6 +101,10 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
   };
 
   const handleDislike = async () => {
+    if (onDislike) {
+        onDislike();
+        return;
+    }
     try {
       let response;
       if (lastAction === "dislike") {
