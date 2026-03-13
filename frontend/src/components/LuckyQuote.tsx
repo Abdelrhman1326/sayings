@@ -94,13 +94,6 @@ const LuckyQuote = () => {
     }
   };
 
-  const handleUndoReaction = async (type: "like" | "dislike") => {
-    const response = await undoReaction(quote_id!, type);
-    setLastAction(null);
-    setLikesCount(response.likes_count);
-    setDislikesCount(response.dislikes_count);
-  };
-
   return (
     <div className="relative w-screen min-h-screen bg-[#141414] bg-opacity-95 flex flex-col items-center pt-8 px-32 overflow-hidden">
       {/* Header */}
@@ -143,7 +136,6 @@ const LuckyQuote = () => {
               lastAction={lastAction}
               onLike={handleLike}
               onDislike={handleDislike}
-              onUndoReaction={handleUndoReaction}
             />
           </>
         )}

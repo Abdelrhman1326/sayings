@@ -109,11 +109,11 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                 setLikes(prev => prev + 1);
             }
 
-            let response;
+            let _response;
             if (originalAction === "like") {
-                response = await undoReaction(Number(id), "like", isCommunity);
+                _response = await undoReaction(Number(id), "like", isCommunity);
             } else {
-                response = await likeQuote(Number(id), isCommunity);
+                _response = await likeQuote(Number(id), isCommunity);
             }
 
         } catch (err: any) {
@@ -146,11 +146,11 @@ const QuoteCard: React.FC<QuoteCardProps> = ({
                 setDislikes(prev => prev + 1);
             }
 
-            let response;
+            let _response;
             if (originalAction === "dislike") {
-                response = await undoReaction(Number(id), "dislike", isCommunity);
+                _response = await undoReaction(Number(id), "dislike", isCommunity);
             } else {
-                response = await dislikeQuote(Number(id), isCommunity);
+                _response = await dislikeQuote(Number(id), isCommunity);
             }
 
         } catch (err: any) {
