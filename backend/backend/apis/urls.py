@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SignupView, LoginView, AuthView, LogoutView, LikeCommunityQuoteView, DislikeCommunityQuoteView, \
+from .views import SignupView, LoginView, AuthView, LogoutView, GetCSRFToken, LikeCommunityQuoteView, DislikeCommunityQuoteView, \
     SaveCommunityQuoteView, UndoCommunityQuoteReactionView
 from .views import RandomQuoteView, SearchQuotesView , DeleteQuoteView, CommunityQuoteCreateView, RetrievePublishedQuotes, DeleteCommunityQuote, RetrieveQuoteGenres
 from .views import LikeQuoteView, DislikeQuoteView, UndoQuoteReactionView, QuoteReactionStatusView, SaveQuoteView, RetrieveSavedQuotesView, RetrieveLikedQuotesView, RetrieveDisLikedQuotesView, RetrieveUsernameView, CopyQuoteView
@@ -10,6 +10,7 @@ urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('csrf/', GetCSRFToken.as_view(), name='get_csrf_token'),
     path('auth/', AuthView.as_view(), name='auth'),
     path('users/engagement/<int:user_id>/', UserEngagementView.as_view(), name='user-engagement'),
     path('users/username/', RetrieveUsernameView.as_view(), name='retrieve-username'),

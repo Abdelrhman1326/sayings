@@ -68,6 +68,8 @@ class LoginView(APIView):
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class AuthView(APIView):
     def get(self, request):
+        from django.middleware.csrf import get_token
+        csrf_token = get_token(request)
         if request.user.is_authenticated:
             return JsonResponse({
                 'authenticated': True,
@@ -75,9 +77,17 @@ class AuthView(APIView):
                     'id': request.user.id,
                     'username': request.user.username,
                     'email': request.user.email,
-                }
+                },
+                'csrfToken': csrf_token
             })
-        return JsonResponse({'authenticated': False})
+        return JsonResponse({'authenticated': False, 'csrfToken': csrf_token})
+
+
+class GetCSRFToken(APIView):
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request):
+        from django.middleware.csrf import get_token
+        return Response({"csrfToken": get_token(request)}, status=status.HTTP_200_OK)
 
 
 class LogoutView(APIView):
