@@ -1,16 +1,9 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
 import { API_BASE } from './apiConfig';
+import { getCSRF } from './csrf';
 
 const LOGINAPI = `${API_BASE}/login/`;
-const CSRFAPI = `${API_BASE}/csrf/`;
-
-// Get CSRF cookie from backend
-const getCSRF = async () => {
-  await axios.get(CSRFAPI, {
-    withCredentials: true,
-  });
-};
 
 export const login = async (loginData: any) => {
   try {

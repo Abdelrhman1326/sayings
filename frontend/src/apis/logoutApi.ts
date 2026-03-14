@@ -1,11 +1,15 @@
 import axios from 'axios';
 import { API_BASE } from './apiConfig';
+import { getCookie } from './cookies';
+import { getCSRF } from './csrf';
 
 const LOGOUT_API = `${API_BASE}/logout/`;
-import { getCookie } from './cookies';
 
 export const logout = async () => {
   try {
+    // Ensure fresh CSRF cookie is set
+    await getCSRF();
+
     const csrfToken = getCookie('csrftoken');
     const response = await axios.post(
       LOGOUT_API,
@@ -13,7 +17,7 @@ export const logout = async () => {
       {
         withCredentials: true, // Required to send session cookies
         headers: {
-            'X-CSRFToken': csrfToken!,
+            'X-CSRFToken': csrfToken || '',
             'Content-Type': 'application/json',
         }
       }

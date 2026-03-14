@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
 import { API_BASE } from './apiConfig';
+import { getCSRF } from './csrf';
 
 const SIGNUPAPI = `${API_BASE}/signup/`;
 
 export const signup = async (signupData: any) => {
   try {
+    await getCSRF();
     const csrfToken = getCookie('csrftoken');
 
     const response = await axios.post(
@@ -15,7 +17,7 @@ export const signup = async (signupData: any) => {
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
+          'X-CSRFToken': csrfToken || '',
         },
       }
     );
