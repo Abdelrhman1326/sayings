@@ -1,22 +1,13 @@
 import axios from "axios";
-import { getCSRFToken } from "./csrfToken";
 import { API_BASE } from './apiConfig';
 
 export const publish = async ({ text, genre }: { text: string; genre: string }) => {
     try {
-        const csrfToken = getCSRFToken();
-
         const response = await axios.post(
             `${API_BASE}/community_quotes/publish/`,
             {
                 quote_genre: genre,
                 quote_text: text,
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken || '',
-                },
             }
         );
 

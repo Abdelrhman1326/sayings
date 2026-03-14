@@ -1,29 +1,28 @@
 import axios from 'axios';
-import { API_BASE } from './apiConfig';
-import { getCSRF } from './csrf';
+import { API_BASE, clearAccessToken } from './apiConfig';
 
 const LOGOUT_API = `${API_BASE}/logout/`;
 
 export const logout = async () => {
   try {
-    const csrfToken = await getCSRF();
-
-    if (!csrfToken) {
-      throw new Error('Failed to get CSRF token');
-    }
-
-    const response = await axios.post(
+    // Call backend logout endpoint (optional for JWT since logout is client-side)
+    await axios.post(
       LOGOUT_API,
       {},
       {
         headers: {
-            'X-CSRFToken': csrfToken,
             'Content-Type': 'application/json',
         }
       }
     );
-    return response.data;
+    
+    // Clear the access token on client side
+    clearAccessToken();
+    
+    return { message: 'Logged out successfully' };
   } catch (error) {
+    // Even if backend call fails, clear the token locally
+    clearAccessToken();
     console.error('Logout failed:', error);
     throw new Error('Logout failed');
   }

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getCSRFToken } from './csrfToken';
 import { API_BASE } from './apiConfig';
 
 export const undoReaction = async (
@@ -8,23 +7,12 @@ export const undoReaction = async (
     isCommunity: boolean = false
 ) => {
     try {
-        const csrfToken = getCSRFToken();
-
         // Use isCommunity boolean to switch URL
         const url = isCommunity
             ? `${API_BASE}/community_quotes/undo/${action}/${quote_id}/`
             : `${API_BASE}/quotes/undo/${action}/${quote_id}/`;
 
-        const response = await axios.post(
-            url,
-            {},
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken || '',
-                },
-            }
-        );
+        const response = await axios.post(url, {});
 
         return response.data;
     } catch (error) {

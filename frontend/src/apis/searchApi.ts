@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getCookie } from './cookies';
 import { API_BASE } from './apiConfig';
 
 const SEARCH_API_URL = `${API_BASE}/quotes/search_quotes/`;
@@ -14,7 +13,6 @@ interface SearchParams {
 
 export const searchQuotes = async (params: SearchParams) => {
     try {
-        const csrfToken = getCookie('csrftoken');
         const response = await axios.get(SEARCH_API_URL, {
             params: {
                 q: params.q,
@@ -22,11 +20,6 @@ export const searchQuotes = async (params: SearchParams) => {
                 gf: params.gf,
                 limit: params.limit || 50,
                 page: params.page || 1,
-            },
-            withCredentials: true,
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
             },
         });
         return response.data;

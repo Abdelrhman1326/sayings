@@ -2,16 +2,16 @@ from operator import truediv
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView, ListAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import generics, mixins, status
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.utils.decorators import method_decorator
-from django.contrib.auth import login, logout
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db import transaction
 from yaml import serialize
+
+# JWT
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # serializers:
 from .serializers import SignupSerializer, LoginSerializer, QuoteSerializer, DeleteQuoteSerializer, \
@@ -35,6 +35,7 @@ from django.db import models
 # Auth/user views:
 ###
 class SignupView(APIView):
+    permission_classes = [AllowAny]
     queryset = User.objects.all()
     serializer_class = SignupSerializer
 
@@ -45,12 +46,24 @@ class SignupView(APIView):
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+            user = serializer.save()
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "message": "User created successfully",
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                }
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
     queryset = User.objects.all()
     serializer_class = LoginSerializer
 
@@ -58,18 +71,24 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
-            login(request, user)  # set session cookie.
-
-            return Response({'message': 'Login successful'}, status=status.HTTP_200_OK)
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'message': 'Login successful',
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                }
+            }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(ensure_csrf_cookie, name='dispatch')
 class AuthView(APIView):
     def get(self, request):
-        from django.middleware.csrf import get_token
-        csrf_token = get_token(request)
         if request.user.is_authenticated:
             return JsonResponse({
                 'authenticated': True,
@@ -78,21 +97,14 @@ class AuthView(APIView):
                     'username': request.user.username,
                     'email': request.user.email,
                 },
-                'csrfToken': csrf_token
             })
-        return JsonResponse({'authenticated': False, 'csrfToken': csrf_token})
-
-
-class GetCSRFToken(APIView):
-    @method_decorator(ensure_csrf_cookie)
-    def get(self, request):
-        from django.middleware.csrf import get_token
-        return Response({"csrfToken": get_token(request)}, status=status.HTTP_200_OK)
+        return JsonResponse({'authenticated': False})
 
 
 class LogoutView(APIView):
     def post(self, request):
-        logout(request)
+        # For JWT, logout is handled client-side by removing tokens
+        # Optionally, you can blacklist the refresh token here
         return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
 
 

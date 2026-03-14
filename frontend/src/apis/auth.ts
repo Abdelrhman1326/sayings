@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { API_BASE } from './apiConfig';
-import { setCSRFToken } from './csrfToken';
 
 interface AuthResult {
   authenticated: boolean;
@@ -9,14 +8,14 @@ interface AuthResult {
     username: string;
     email: string;
   }
-  csrfToken?: string;
 }
 
 export const getAuth = async () => {
-  const res = await axios.get(`${API_BASE}/auth/`);
-  const data = res.data as AuthResult;
-  if (data.csrfToken) {
-    setCSRFToken(data.csrfToken);
+  try {
+    const res = await axios.get(`${API_BASE}/auth/`);
+    return res.data as AuthResult;
+  } catch (error) {
+    // If auth check fails, return not authenticated
+    return { authenticated: false } as AuthResult;
   }
-  return data;
 };

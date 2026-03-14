@@ -1,5 +1,4 @@
 import axios from "axios";
-import { getCookie } from "./cookies";
 import { API_BASE } from './apiConfig';
 
 // Cursor info sent to the backend
@@ -29,15 +28,8 @@ export const getFeed = async (
   cursor: FeedCursor = {}
 ): Promise<FeedResponse> => {
   try {
-    const csrfToken = getCookie("csrftoken");
-
     const response = await axios.get(`${API_BASE}/quotes/feed/`, {
       params: cursor, // last_score, last_id, limit if provided
-      withCredentials: true,
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
-      },
     });
 
     return response.data as FeedResponse;

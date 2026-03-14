@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getCSRFToken } from './csrfToken';
 import { API_BASE } from './apiConfig';
 
 export const dislikeQuote = async (quote_id: number, isCommunity: boolean = false): Promise<any> => {
@@ -8,13 +7,7 @@ export const dislikeQuote = async (quote_id: number, isCommunity: boolean = fals
         : `${API_BASE}/quotes/${quote_id}/dislike/`;
 
     try {
-        const csrfToken = getCSRFToken();
-        const response = await axios.post(URL, null, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken || '',
-            },
-        });
+        const response = await axios.post(URL, null);
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {

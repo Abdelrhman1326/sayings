@@ -1,20 +1,11 @@
 import axios from "axios";
-import { getCookie } from "./cookies";
 import { API_BASE } from './apiConfig';
 
 export const copyQuote = async (quote_id: number) => {
     try {
-        const csrfToken = getCookie("csrftoken");
         const response = await axios.post(
             `${API_BASE}/quotes/copy_quote/${quote_id}/`,
-            {},
-            {
-                withCredentials: true,
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
-                },
-            }
+            {}
         );
         return response.data;
     } catch (error) {

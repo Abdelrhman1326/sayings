@@ -41,14 +41,23 @@ const Signup = () => {
     }
 
     try {
-      await signup({
+      const response = await signup({
         username: formData.username,
         email: formData.email,
         password: formData.password,
         confirm_password: formData.confirmPassword,
       });
+      
+      // Store tokens in localStorage for persistence
+      if (response.access) {
+        localStorage.setItem('access_token', response.access);
+      }
+      if (response.refresh) {
+        localStorage.setItem('refresh_token', response.refresh);
+      }
+      
       toast.success('Signup successful');
-      navigate('/login');
+      navigate('/home');
     } catch (err: any) {
       toast.error(err.message || 'Signup failed');
     }

@@ -37,7 +37,19 @@ const Login = () => {
                 localStorage.removeItem("sayings_username");
             }
 
-            await login(formState);
+            const response = await login(formState);
+            
+            // Store tokens in localStorage for persistence
+            if (response.access) {
+                localStorage.setItem('access_token', response.access);
+            }
+            if (response.refresh) {
+                localStorage.setItem('refresh_token', response.refresh);
+            }
+            if (response.user?.username) {
+                localStorage.setItem('sayings_username', response.user.username);
+            }
+            
             toast.success('Login successful');
             navigate('/home');
         } catch (err: any) {
