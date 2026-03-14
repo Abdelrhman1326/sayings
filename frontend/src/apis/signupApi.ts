@@ -1,26 +1,31 @@
 import axios from 'axios';
-import { getCookie } from './cookies';
 import { API_BASE } from './apiConfig';
 import { getCSRF } from './csrf';
+import { setCSRFToken } from './csrfToken';
 
 const SIGNUPAPI = `${API_BASE}/signup/`;
 
 export const signup = async (signupData: any) => {
   try {
-    await getCSRF();
-    const csrfToken = getCookie('csrftoken');
+    const csrfToken = await getCSRF();
+
+    if (!csrfToken) {
+      throw new Error('Failed to get CSRF token');
+    }
 
     const response = await axios.post(
       SIGNUPAPI,
       signupData,
       {
-        withCredentials: true,
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken || '',
+          'X-CSRFToken': csrfToken,
         },
       }
     );
+
+    // Store CSRF token for subsequent requests
+    setCSRFToken(csrfToken);
 
     return response.data;
   } catch (error: unknown) {

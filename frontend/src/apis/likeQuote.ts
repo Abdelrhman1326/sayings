@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getCookie } from './cookies';
+import { getCSRFToken } from './csrfToken';
 import { API_BASE } from './apiConfig';
 
 export const likeQuote = async (quote_id: number, isCommunity: boolean = false) => {
@@ -8,12 +8,11 @@ export const likeQuote = async (quote_id: number, isCommunity: boolean = false) 
         : `${API_BASE}/quotes/${quote_id}/like/`;
 
     try {
-        const csrfToken = getCookie('csrftoken');
+        const csrfToken = getCSRFToken();
         const response = await axios.post(URL, {}, {
-            withCredentials: true,
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
+                'X-CSRFToken': csrfToken || '',
             },
         });
         return response.data;

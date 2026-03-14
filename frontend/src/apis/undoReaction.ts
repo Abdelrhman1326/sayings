@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getCookie } from './cookies';
+import { getCSRFToken } from './csrfToken';
 import { API_BASE } from './apiConfig';
 
 export const undoReaction = async (
@@ -8,7 +8,7 @@ export const undoReaction = async (
     isCommunity: boolean = false
 ) => {
     try {
-        const csrfToken = getCookie('csrftoken');
+        const csrfToken = getCSRFToken();
 
         // Use isCommunity boolean to switch URL
         const url = isCommunity
@@ -19,10 +19,9 @@ export const undoReaction = async (
             url,
             {},
             {
-                withCredentials: true,
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
+                    'X-CSRFToken': csrfToken || '',
                 },
             }
         );

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getCookie } from './cookies';
+import { getCSRFToken } from './csrfToken';
 import { API_BASE } from './apiConfig';
 
 export const saveQuote = async (quote_id: number, isCommunity: boolean = false): Promise<any> => {
@@ -8,12 +8,11 @@ export const saveQuote = async (quote_id: number, isCommunity: boolean = false):
         : `${API_BASE}/quotes/save_quote/${quote_id}/`;
 
     try {
-        const csrfToken = getCookie('csrftoken');
-        const response = await axios.post(URL, null, {  // null for empty body
-            withCredentials: true,
+        const csrfToken = getCSRFToken();
+        const response = await axios.post(URL, null, {
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
+                'X-CSRFToken': csrfToken || '',
             },
         });
         return response.data;

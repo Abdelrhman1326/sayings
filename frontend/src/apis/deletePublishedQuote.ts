@@ -1,18 +1,17 @@
 import axios from "axios";
-import { getCookie } from "./cookies";
+import { getCSRFToken } from "./csrfToken";
 import { API_BASE } from './apiConfig';
 
 export const deletePublishedQuote = async (quoteId: number) => {
     try {
-        const csrfToken = getCookie("csrftoken");
+        const csrfToken = getCSRFToken();
 
         const response = await axios.delete(
             `${API_BASE}/community_quotes/delete/${quoteId}/`,
             {
-                withCredentials: true,
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "X-CSRFToken": csrfToken || '',
                 },
                 validateStatus: (status) => status >= 200 && status < 300,
             }

@@ -1,10 +1,10 @@
 import axios from "axios";
-import { getCookie } from "./cookies";
+import { getCSRFToken } from "./csrfToken";
 import { API_BASE } from './apiConfig';
 
 export const publish = async ({ text, genre }: { text: string; genre: string }) => {
     try {
-        const csrfToken = getCookie("csrftoken");
+        const csrfToken = getCSRFToken();
 
         const response = await axios.post(
             `${API_BASE}/community_quotes/publish/`,
@@ -13,10 +13,9 @@ export const publish = async ({ text, genre }: { text: string; genre: string }) 
                 quote_text: text,
             },
             {
-                withCredentials: true,
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
+                    "X-CSRFToken": csrfToken || '',
                 },
             }
         );

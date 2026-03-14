@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE } from './apiConfig';
+import { setCSRFToken } from './csrfToken';
 
 interface AuthResult {
   authenticated: boolean;
@@ -12,12 +13,10 @@ interface AuthResult {
 }
 
 export const getAuth = async () => {
-  const res = await axios.get(`${API_BASE}/auth/`, {
-    withCredentials: true,
-  });
+  const res = await axios.get(`${API_BASE}/auth/`);
   const data = res.data as AuthResult;
   if (data.csrfToken) {
-    document.cookie = `csrftoken=${data.csrfToken}; path=/; samesite=lax`;
+    setCSRFToken(data.csrfToken);
   }
   return data;
 };
