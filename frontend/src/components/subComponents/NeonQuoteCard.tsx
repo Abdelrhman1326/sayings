@@ -68,10 +68,11 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Copied to clipboard");
+      // toast.success("Copied to clipboard");
       await processCopyInBackend();
     } catch {
-      toast.error("Failed to copy");
+      // toast.error("Failed to copy");
+      console.log("Failed to copy")
     }
   };
 
