@@ -11,41 +11,48 @@ let accessToken: string | null = null;
 
 // Load token from localStorage on initialization
 const loadTokenFromStorage = () => {
-  const stored = localStorage.getItem('access_token');
-  if (stored) {
-    accessToken = stored;
-  }
+    const stored = localStorage.getItem('access_token');
+    if (stored) {
+        accessToken = stored;
+    }
 };
 
 loadTokenFromStorage();
 
 export const setAccessToken = (token: string) => {
-  accessToken = token;
-  localStorage.setItem('access_token', token);
+    accessToken = token;
+    localStorage.setItem('access_token', token);
 };
 
 export const getAccessToken = (): string | null => {
-  return accessToken;
+    return accessToken;
 };
 
 export const clearAccessToken = () => {
-  accessToken = null;
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
+    accessToken = null;
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
 };
 
 // Axios interceptor to add JWT token to requests
 axios.interceptors.request.use(
-  (config) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    (config) => {
+        // Don't attach token to auth endpoints
+        const excludedUrls = ['/login/', '/signup/'];
+        const isExcluded = excludedUrls.some(url => config.url?.includes(url));
+
+        if (!isExcluded) {
+            const token = getAccessToken();
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+        }
+
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
 );
 
 // Include credentials for any fallback cookie-based auth
