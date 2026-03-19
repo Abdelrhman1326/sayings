@@ -56,44 +56,57 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
     }
   }, [lastActionProp]);
 
-    const processCopyInBackend = async () => {
-      try {
-        const response = await copyQuote(Number(id));
-        console.log("Copy action processed in the backend:", response);
-      } catch (err: any) {
-        console.error("Error while processing copy action in the backend:", err?.message || err);
-      }
-    };
+  const processCopyInBackend = async () => {
+    try {
+      await copyQuote(Number(id));
+    } catch (err: any) {
+      console.error("Error processing copy action:", err?.message || err);
+    }
+  };
 
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      // toast.success("Copied to clipboard");
       await processCopyInBackend();
     } catch {
-      // toast.error("Failed to copy");
-      console.log("Failed to copy")
+      console.log("Failed to copy");
     }
   };
 
   const handleLike = async () => {
     if (onLike) {
-        onLike();
-        return;
+      onLike();
+      return;
     }
+
+    const originalAction = lastAction;
+    const originalLikes = likes;
+    const originalDislikes = dislikes;
+
     try {
-      let response;
+      // Optimistic update
       if (lastAction === "like") {
-        response = await undoReaction(Number(id), "like");
         setLastAction(null);
-      } else {
-        response = await likeQuote(Number(id));
+        setLikes(prev => Math.max(prev - 1, 0));
+      } else if (lastAction === "dislike") {
         setLastAction("like");
+        setLikes(prev => prev + 1);
+        setDislikes(prev => Math.max(prev - 1, 0));
+      } else {
+        setLastAction("like");
+        setLikes(prev => prev + 1);
       }
-      setLikes(response.likes_count);
-      setDislikes(response.dislikes_count);
-      setError(null);
+
+      if (originalAction === "like") {
+        await undoReaction(Number(id), "like");
+      } else {
+        await likeQuote(Number(id));
+      }
     } catch (err: any) {
+      // Rollback
+      setLastAction(originalAction);
+      setLikes(originalLikes);
+      setDislikes(originalDislikes);
       setError(err.message);
       toast.error("Error liking quote");
     }
@@ -101,74 +114,97 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
 
   const handleDislike = async () => {
     if (onDislike) {
-        onDislike();
-        return;
+      onDislike();
+      return;
     }
+
+    const originalAction = lastAction;
+    const originalLikes = likes;
+    const originalDislikes = dislikes;
+
     try {
-      let response;
+      // Optimistic update
       if (lastAction === "dislike") {
-        response = await undoReaction(Number(id), "dislike");
         setLastAction(null);
-      } else {
-        response = await dislikeQuote(Number(id));
+        setDislikes(prev => Math.max(prev - 1, 0));
+      } else if (lastAction === "like") {
         setLastAction("dislike");
+        setLikes(prev => Math.max(prev - 1, 0));
+        setDislikes(prev => prev + 1);
+      } else {
+        setLastAction("dislike");
+        setDislikes(prev => prev + 1);
       }
-      setLikes(response.likes_count);
-      setDislikes(response.dislikes_count);
-      setError(null);
+
+      if (originalAction === "dislike") {
+        await undoReaction(Number(id), "dislike");
+      } else {
+        await dislikeQuote(Number(id));
+      }
     } catch (err: any) {
+      // Rollback
+      setLastAction(originalAction);
+      setLikes(originalLikes);
+      setDislikes(originalDislikes);
       setError(err.message);
       toast.error("Error disliking quote");
     }
   };
 
   const handleSave = async () => {
-    try {
-      const response: any = await saveQuote(Number(id));
-      const message = response.data.message;
+    const originalState = saved;
 
-      if (message === "Quote saved") {
+    try {
+      // Optimistic update
+      setSaved(!saved);
+
+      const response: any = await saveQuote(Number(id));
+      const message = response.message;
+
+      if (message === "Quote saved" || message === "Community quote saved") {
         setSaved(true);
         toast.success("Saved");
-      } else if (message === "Quote unsaved") {
+      } else if (message === "Quote unsaved" || message === "Community quote unsaved") {
         setSaved(false);
         toast.success("Unsaved");
         onUnsave?.(id);
       }
     } catch (err: any) {
+      // Rollback
+      setSaved(originalState);
       toast.error(`Error: ${err?.message}`);
     }
   };
 
   return (
-    <div className="relative w-full max-w-xl p-6 flex flex-col gap-4 text-white
+    <div className="relative w-full max-w-xs sm:max-w-md md:max-w-xl p-4 sm:p-5 md:p-6 flex flex-col gap-3 sm:gap-4 text-white
       bg-[#18181B] rounded-2xl border-2 border-transparent
       hover:border-pink-500 hover:shadow-[0_0_20px_rgba(255,0,170,0.7),0_0_40px_rgba(0,255,241,0.5)]
       transition-all duration-300">
-      
+
       {/* Quote */}
-      <p className="text-xl italic">“{text}”</p>
-      
+      <p className="text-lg sm:text-xl md:text-2xl italic">"{text}"</p>
+
       {/* Author */}
-      <p className="text-right text-gray-400">— {author}</p>
-      {source && <p className="text-right text-gray-400">{source}</p>}
+      <p className="text-right text-gray-400 text-sm sm:text-base md:text-lg">— {author}</p>
+      {source && <p className="text-right text-gray-400 text-sm sm:text-base md:text-lg">{source}</p>}
 
 
       {/* Actions */}
-      <div className="flex items-center gap-4 text-gray-400 mt-2">
+      <div className="flex items-center gap-3 sm:gap-4 text-gray-400 mt-2">
         <div
           className="flex items-center gap-1 cursor-pointer hover:text-white"
           onClick={handleLike}
         >
-          <ThumbsUp size={16} fill={lastAction === "like" ? "currentColor" : "none"} /> 
-          <span>{likes}</span>
+          <ThumbsUp size={16} fill={lastAction === "like" ? "currentColor" : "none"} />
+          <span className="text-sm sm:text-base">{likes}</span>
         </div>
         <div
           className="flex items-center gap-1 cursor-pointer hover:text-white"
           onClick={handleDislike}
         >
-          <ThumbsDown size={16} fill={lastAction === "dislike" ? "currentColor" : "none"} /> 
-          <span>{dislikes}</span>
+          <ThumbsDown size={16} fill={lastAction === "dislike" ? "currentColor" : "none"} />
+          <span className="text-sm sm:text-base">{dislikes}</span>
         </div>
         <Copy size={16} className="cursor-pointer hover:text-white" onClick={() => {
             copyToClipboard(text)
@@ -180,7 +216,7 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
           <Bookmark size={18} className="cursor-pointer hover:text-white" onClick={handleSave} />
         )}
       </div>
-      
+
       {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
     </div>
   );

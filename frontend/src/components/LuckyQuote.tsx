@@ -95,9 +95,9 @@ const LuckyQuote = () => {
   };
 
   return (
-    <div className="relative w-screen min-h-screen bg-[#141414] bg-opacity-95 flex flex-col items-center pt-8 px-32 overflow-hidden">
+    <div className="relative w-screen min-h-screen bg-[#141414] bg-opacity-95 flex flex-col items-center pt-6 px-4 sm:px-8 md:px-16 lg:px-32 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-6 w-full relative">
+      <div className="flex items-center gap-4 sm:gap-6 w-full relative">
         <div className="flex flex-col">
           <Logo size={44} />
         </div>
@@ -110,9 +110,10 @@ const LuckyQuote = () => {
           >
             <ArrowLeft
               className="text-white group-hover:stroke-uiPrimary transition duration-200"
-              size={28}
+              size={20}
+              strokeWidth={2.5}
             />
-            <span className="text-white text-xl group-hover:text-uiPrimary transition duration-200">
+            <span className="text-white text-sm sm:text-xl group-hover:text-uiPrimary transition duration-200">
               Back
             </span>
           </div>
@@ -120,9 +121,9 @@ const LuckyQuote = () => {
       </div>
 
       {/* Neon Quote Card with full-page light */}
-      <div className="flex-grow flex items-center justify-center w-full mb-28 relative">
+      <div className="flex-grow flex items-center justify-center w-full mb-8 sm:mb-16 md:mb-24 lg:mb-28 relative">
         {loading ? (
-          <p className="text-white text-lg">Loading...</p>
+          <p className="text-white text-base sm:text-lg">Loading...</p>
         ) : (
           <>
             {/* Full-page Light Beam */}
