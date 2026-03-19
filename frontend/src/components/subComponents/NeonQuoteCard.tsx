@@ -17,9 +17,9 @@ interface QuoteCardProps {
   source?: string;
   saved?: boolean;
   onUnsave?: (id: number | string) => void;
-  lastAction?: "like" | "dislike" | null;
-  onLike?: () => void;
-  onDislike?: () => void;
+  liked_by_user?: boolean;
+  disliked_by_user?: boolean;
+  isCommunity?: boolean;
 }
 
 const NeonQuoteCard: React.FC<QuoteCardProps> = ({
@@ -31,30 +31,37 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
   source = "",
   saved: savedProp = false,
   onUnsave,
-  lastAction: lastActionProp,
-  onLike,
-  onDislike,
+  liked_by_user = false,
+  disliked_by_user = false,
+  isCommunity: isCommunityProp = false,
 }) => {
+  const initialAction: "like" | "dislike" | null = liked_by_user
+    ? "like"
+    : disliked_by_user
+      ? "dislike"
+      : null;
+
   const [likes, setLikes] = useState(likes_count ?? 0);
   const [dislikes, setDislikes] = useState(dislikes_count ?? 0);
-  const [lastAction, setLastAction] = useState<"like" | "dislike" | null>(null);
+  const [lastAction, setLastAction] = useState<"like" | "dislike" | null>(initialAction);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<boolean>(savedProp);
+  const [isCommunity, setIsCommunity] = useState<boolean>(isCommunityProp);
 
   // Sync state with props if provided
   useEffect(() => {
-    setLikes(likes_count ?? 0);
-  }, [likes_count]);
+    setSaved(savedProp);
+  }, [savedProp]);
 
   useEffect(() => {
-    setDislikes(dislikes_count ?? 0);
-  }, [dislikes_count]);
+    setIsCommunity(isCommunityProp);
+  }, [isCommunityProp]);
 
   useEffect(() => {
-    if (lastActionProp !== undefined) {
-      setLastAction(lastActionProp);
-    }
-  }, [lastActionProp]);
+    if (liked_by_user) setLastAction("like");
+    else if (disliked_by_user) setLastAction("dislike");
+    else setLastAction(null);
+  }, [liked_by_user, disliked_by_user]);
 
   const processCopyInBackend = async () => {
     try {
@@ -74,11 +81,6 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
   };
 
   const handleLike = async () => {
-    if (onLike) {
-      onLike();
-      return;
-    }
-
     const originalAction = lastAction;
     const originalLikes = likes;
     const originalDislikes = dislikes;
@@ -98,9 +100,9 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
       }
 
       if (originalAction === "like") {
-        await undoReaction(Number(id), "like");
+        await undoReaction(Number(id), "like", isCommunity);
       } else {
-        await likeQuote(Number(id));
+        await likeQuote(Number(id), isCommunity);
       }
     } catch (err: any) {
       // Rollback
@@ -108,16 +110,10 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
       setLikes(originalLikes);
       setDislikes(originalDislikes);
       setError(err.message);
-      toast.error("Error liking quote");
     }
   };
 
   const handleDislike = async () => {
-    if (onDislike) {
-      onDislike();
-      return;
-    }
-
     const originalAction = lastAction;
     const originalLikes = likes;
     const originalDislikes = dislikes;
@@ -137,9 +133,9 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
       }
 
       if (originalAction === "dislike") {
-        await undoReaction(Number(id), "dislike");
+        await undoReaction(Number(id), "dislike", isCommunity);
       } else {
-        await dislikeQuote(Number(id));
+        await dislikeQuote(Number(id), isCommunity);
       }
     } catch (err: any) {
       // Rollback
@@ -147,7 +143,6 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
       setLikes(originalLikes);
       setDislikes(originalDislikes);
       setError(err.message);
-      toast.error("Error disliking quote");
     }
   };
 
@@ -158,15 +153,13 @@ const NeonQuoteCard: React.FC<QuoteCardProps> = ({
       // Optimistic update
       setSaved(!saved);
 
-      const response: any = await saveQuote(Number(id));
+      const response: any = await saveQuote(Number(id), isCommunity);
       const message = response.message;
 
       if (message === "Quote saved" || message === "Community quote saved") {
         setSaved(true);
-        toast.success("Saved");
       } else if (message === "Quote unsaved" || message === "Community quote unsaved") {
         setSaved(false);
-        toast.success("Unsaved");
         onUnsave?.(id);
       }
     } catch (err: any) {

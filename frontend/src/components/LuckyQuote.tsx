@@ -5,9 +5,6 @@ import { useNavigate } from "react-router-dom";
 import NeonQuoteCard from "./subComponents/NeonQuoteCard";
 import { getRandomQuote } from "../apis/randomQuoteApi";
 import { getQuoteReactionStatus } from "../apis/getQuoteReactionStatus";
-import { likeQuote } from "../apis/likeQuote";
-import { dislikeQuote } from "../apis/dislikeQuote";
-import { undoReaction } from "../apis/undoReaction";
 
 const LuckyQuote = () => {
   const navigate = useNavigate();
@@ -50,50 +47,6 @@ const LuckyQuote = () => {
     fetchQuote();
   }, []);
 
-  const handleLike = async () => {
-    try {
-      let response;
-      if (lastAction === "like") {
-        response = await undoReaction(quote_id!, "like");
-        setLastAction(null);
-      } else {
-        response = await likeQuote(quote_id!);
-        setLastAction("like");
-      }
-      setLikesCount(response.likes_count);
-      setDislikesCount(response.dislikes_count);
-    } catch (err: any) {
-      if (err.message === "User already liked this quote") {
-        const response = await undoReaction(quote_id!, "like");
-        setLastAction(null);
-        setLikesCount(response.likes_count);
-        setDislikesCount(response.dislikes_count);
-      }
-    }
-  };
-
-  const handleDislike = async () => {
-    try {
-      let response;
-      if (lastAction === "dislike") {
-        response = await undoReaction(quote_id!, "dislike");
-        setLastAction(null);
-      } else {
-        response = await dislikeQuote(quote_id!);
-        setLastAction("dislike");
-      }
-      setLikesCount(response.likes_count);
-      setDislikesCount(response.dislikes_count);
-    } catch (err: any) {
-      if (err.message === "User already disliked this quote") {
-        const response = await undoReaction(quote_id!, "dislike");
-        setLastAction(null);
-        setLikesCount(response.likes_count);
-        setDislikesCount(response.dislikes_count);
-      }
-    }
-  };
-
   return (
     <div className="relative w-screen min-h-screen bg-[#141414] bg-opacity-95 flex flex-col items-center pt-6 px-4 sm:px-8 md:px-16 lg:px-32 overflow-hidden">
       {/* Header */}
@@ -129,14 +82,14 @@ const LuckyQuote = () => {
             {/* Full-page Light Beam */}
             <div className="absolute top-10 left-0 w-full h-full bg-gradient-to-b from-cyan-400/30 via-cyan-300/20 to-transparent blur-3xl animate-[pulse_6s_infinite] pointer-events-none" />
             <NeonQuoteCard
+              key={quote_id}
               id={quote_id || 0}
               text={quote || ""}
               author={author || ""}
               likes_count={likes_count || 0}
               dislikes_count={dislikes_count || 0}
-              lastAction={lastAction}
-              onLike={handleLike}
-              onDislike={handleDislike}
+              liked_by_user={lastAction === "like"}
+              disliked_by_user={lastAction === "dislike"}
             />
           </>
         )}
