@@ -12,8 +12,8 @@ const LuckyQuote = () => {
   const [quote, setQuote] = useState<string | null>(null);
   const [author, setAuthor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [likes_count, setLikesCount] = useState<number>(0);
-  const [dislikes_count, setDislikesCount] = useState<number>(0);
+  const [likes_count] = useState<number>(0);
+  const [dislikes_count] = useState<number>(0);
   const [quote_id, setQuoteId] = useState<number | undefined>(undefined);
   const [lastAction, setLastAction] = useState<"like" | "dislike" | null>(null);
 
