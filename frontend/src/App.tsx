@@ -18,6 +18,8 @@ import NotFound from './components/NotFound';
 
 import { getAuth } from './apis/auth';
 
+import { Analytics } from '@vercel/analytics/react';
+
 function App() {
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -48,6 +50,9 @@ function App() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/lucky-quote" element={<ProtectedRoute><LuckyQuote /></ProtectedRoute>} />
       </Routes>
+
+      <Analytics />
+
       <ToastContainer position="top-right" theme='dark' autoClose={3000} />
     </>
   );
