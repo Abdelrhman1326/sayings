@@ -19,6 +19,7 @@ const CHUNK_SIZE = 20;
 const Feed: React.FC = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCount, setLoadingCount] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
   const [cursor, setCursor] = useState({ limit: CHUNK_SIZE });
@@ -31,6 +32,7 @@ const Feed: React.FC = () => {
     if (loading || (!hasMore && !prepend)) return;
 
     setLoading(true);
+    setLoadingCount(c => c + 1);
     // const toastId = toast.loading("Loading feed...", { autoClose: false });
 
     try {
@@ -77,6 +79,7 @@ const Feed: React.FC = () => {
       // toast.error("Failed to load feed");
     } finally {
       setLoading(false);
+      setLoadingCount(c => Math.max(0, c - 1));
       // toast.dismiss(toastId);
     }
   };
@@ -143,6 +146,15 @@ const Feed: React.FC = () => {
         <p className="flex text-lg text-white/50 justify-center text-center mt-4">
           {loading ? "Loading feed..." : "No quotes yet"}
         </p>
+      )}
+
+      {/* Loading Indicator */}
+      {loadingCount > 0 && (
+        <div className="py-8 w-full flex justify-center">
+          <div className="animate-pulse text-white/40 font-medium">
+            Fetching more quotes...
+          </div>
+        </div>
       )}
     </div>
   );
