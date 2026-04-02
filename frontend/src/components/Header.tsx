@@ -52,7 +52,7 @@ const Header = () => {
           <Button
             text={isAuthenticated ? "log out" : "sign in"}
             className="font-jsMath font-bold rounded-full w-[125px] h-[45px]
-            border-solid border-white border-4 text-[22px] flex items-center justify-center"
+            border-solid border-white border-[3px] text-[22px] flex items-center justify-center"
             onClick={async () => {
               if (!isAuthenticated) {
                 navigate('/login');
