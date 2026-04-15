@@ -68,17 +68,20 @@ This keeps the system efficient, explainable, and fast.
 ### Landing Page
 
 <p align="center">
-  <img src="./Screenshots/Screenshot-2026-03-15-235028.png" width="32%" />
-  <img src="./Screenshots/Screenshot-2026-03-15-234935.png" width="32%" />
-  <img src="./Screenshots/Screenshot-2026-03-15-234951.png" width="32%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-235028.png" width="48%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-234935.png" width="48%" />
+</p>
+
+<p align="center">
+  <img src="./Screenshots/Screenshot-2026-03-15-234951.png" width="48%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-235133.png" width="48%" />
 </p>
 
 ### Feed
 
 <p align="center">
-  <img src="./Screenshots/Screenshot-2026-03-15-235133.png" width="32%" />
-  <img src="./Screenshots/Screenshot-2026-03-15-235100.png" width="32%" />
-  <img src="./Screenshots/Screenshot-2026-03-15-235113.png" width="32%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-235100.png" width="48%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-235113.png" width="48%" />
 </p>
 
 ---
