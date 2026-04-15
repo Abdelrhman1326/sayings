@@ -62,17 +62,24 @@ This keeps the system efficient, explainable, and fast.
 - Building a complete production-style web application
 
 ---
+
 ## Screenshots
 
 ### Landing Page
 
-![Landing](./Screenshots/Screenshot-2026-03-15-235028.png)
-![Landing](./Screenshots/Screenshot-2026-03-15-234935.png)
-![Landing](./Screenshots/Screenshot-2026-03-15-234951.png)![Feed](./Screenshots/Screenshot-2026-03-15-235133.png)
+<p align="center">
+  <img src="./Screenshots/Screenshot-2026-03-15-235028.png" width="32%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-234935.png" width="32%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-234951.png" width="32%" />
+</p>
 
+### Feed
 
-![Feed](./Screenshots/Screenshot-2026-03-15-235100.png)
-![Feed](./Screenshots/Screenshot-2026-03-15-235113.png)
+<p align="center">
+  <img src="./Screenshots/Screenshot-2026-03-15-235133.png" width="32%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-235100.png" width="32%" />
+  <img src="./Screenshots/Screenshot-2026-03-15-235113.png" width="32%" />
+</p>
 
 ---
 
