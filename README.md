@@ -62,6 +62,12 @@ This keeps the system efficient, explainable, and fast.
 - Building a complete production-style web application
 
 ---
+## Screenshots
+
+### Landing Page
+![Landing](./Screenshots/Screenshot-2026-03-15-235028.png)
+
+---
 
 ## Links
 
