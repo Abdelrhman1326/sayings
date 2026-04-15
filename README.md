@@ -68,8 +68,7 @@ This keeps the system efficient, explainable, and fast.
 
 ![Landing](./Screenshots/Screenshot-2026-03-15-235028.png)
 ![Landing](./Screenshots/Screenshot-2026-03-15-234935.png)
-![Landing](./Screenshots/Screenshot-2026-03-15-234951.png)
-![Feed](./Screenshots/Screenshot-2026-03-15-235133.png)
+![Landing](./Screenshots/Screenshot-2026-03-15-234951.png)![Feed](./Screenshots/Screenshot-2026-03-15-235133.png)
 
 
 ![Feed](./Screenshots/Screenshot-2026-03-15-235100.png)
