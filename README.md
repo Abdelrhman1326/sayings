@@ -67,7 +67,6 @@ This keeps the system efficient, explainable, and fast.
 
 - Live App: https://sayings-quotes.vercel.app/home  
 - Source Code: https://github.com/Abdelrhman1326/sayings  
-- Demo Video: https://www.youtube.com/watch?v=RVXSZ10LpJw
 
 ---
 
