@@ -1,14 +1,74 @@
 # Sayings
-#### Description:
-Sayings is a social web application designed to create a digital space where meaningful quotes, ideas, and reflections can flow freely among people who value substance over noise. I developed it as my CS50x final project. The platform combines social interaction, personal growth, and community engagement into a user-friendly and responsive experience. The main goal of Sayings is simple: to provide a space for individuals to discover, share, and respond to thoughts that influence them—whether these come from books, movies, famous figures, or their own reflections. Over time, this concept grew into a functional social ecosystem with user accounts, personalized feeds, and rich interaction options.
-Sayings offers a global feed showcasing quotes from various sources, including literature, philosophy, biographies, speeches, films, and interviews. This design allows users to see high-quality, thought-provoking content immediately without needing to follow anyone. The global feed acts as the platform's intellectual "front page," ensuring new users have engaging material to read as soon as they arrive.
-Users can also contribute by posting their own quotes. This encourages community-driven content creation. Whether someone wants to share a favorite line from a book or express their own idea, Sayings promotes participation. Once posted, these contributions become part of a living stream of collective knowledge. Since people connect differently with various types of thoughts, the platform prioritizes exploration over restrictive algorithms.
-The interaction model is inspired by Reddit's engagement methods: upvotes and downvotes. Instead of lengthy comments, the focus is on the ideas themselves—their clarity, inspiration, humor, accuracy, or emotional impact. Quotes that resonate rise to the top, while those that don’t receive less attention. This dynamic keeps the feed self-curated by the community and ensures high-quality content naturally stands out without extensive moderation.
-For user identity, Sayings features secure accounts built on Django’s authentication system and enhanced with Django REST Framework’s permissions. Users can create accounts, log in, manage their contributions, and track how their quotes perform within the community. The authentication process follows best practices to ensure session safety, secure token-based communication, and protection of backend data. Every user experiences their own personalized environment without sacrificing privacy or consistency.
-To further customize the experience, Sayings includes a personalized feed system that responds to user interactions. The backend tracks preferences such as which categories of quotes users engage with most, their preferred sources, and their reactions to different authors. The platform then highlights quotes that match the user’s interests, maintaining relevance while keeping content fresh and diverse. Instead of relying on complex machine-learning models, this personalization uses lightweight but effective methods and engagement-based filtering, ensuring the system is efficient and reliable.
-Technically, Sayings was built with a modern stack designed for scalability and developer efficiency.
-The backend is powered by Django and Django REST Framework (DRF). Django provides the architecture, ORM capabilities, and authentication framework, while DRF manages serialization, API routing, permissions, and structured responses. The backend includes secure API endpoints for user registration, authentication, quote creation, voting, feed retrieval, personalization logic, and relationships between models. Emphasis was placed on designing clean, normalized database schemas to support quote metadata, user activity logs, and engagement tracking without slowing performance. PostgreSQL serves as the primary database, valued for its reliability and ability to handle complex queries efficiently.
-On the frontend, the app uses React.js paired with Tailwind CSS to create a smooth, responsive, and intuitive user interface. The application is structured using a clean component-based architecture, which separates feed rendering, user interactions, navigation, profile management, and authentication flows. React’s state management allows for quick updates when users vote, load more quotes, or switch feeds. Tailwind CSS gives the interface a modern look with fast styling and reusable utility classes. Care was taken to ensure a natural experience—minimalistic, readable typography, comfortable spacing, and a layout that prioritizes content over the interface.
-Communication between the frontend and backend occurs entirely through RESTful APIs, making the system modular and easy to scale or integrate with new services. This separation also ensures the frontend remains fast and lightweight, being deliverable through modern deployment processes.
-Sayings is designed for those who enjoy meaningful content and prefer social media that adds value rather than distraction. It offers a slower, more thoughtful experience—perfect for when you seek insight, clarity, or inspiration. This project reflects my commitment to building purposeful, user-centered web applications focused on clean design, efficient structure, and intentional user experience.
-Overall, Sayings embodies my journey from concept to near production-ready implementation: designing relational schemas, implementing API-driven backend logic, creating dynamic frontend interfaces, ensuring secure authentication, and fostering a space where people can share ideas simply and impactfully—through the power of words.
+
+**Sayings** is a full-stack social web application for sharing, voting on, and discovering meaningful quotes through community signals and personalized feeds.  
+Built as the CS50x final project, it focuses on clean system design, API architecture, and data-driven ranking rather than complex ML.
+
+---
+
+## Core Features
+
+- Global feed of quotes available instantly to all users
+- Community contributions (users can post their own quotes)
+- Upvote / downvote model to surface high-quality content
+- Personalized feed based on user interactions and preferences
+- Secure user accounts with authentication and permissions
+- Responsive UI with real-time vote updates
+
+---
+
+## Tech Stack
+
+### Backend
+- Django
+- Django REST Framework
+- PostgreSQL
+
+### Frontend
+- React
+- Tailwind CSS
+
+---
+
+## Architecture Highlights
+
+- Designed a **normalized PostgreSQL schema** for quotes, votes, authors, categories, and user activity
+- Built **RESTful APIs** for authentication, voting, feed retrieval, and personalization
+- Implemented **vote integrity logic** and permission handling with Django REST Framework
+- Developed an **engagement-based ranking algorithm** using vote signals and user activity (no ML)
+- Clean separation between frontend and backend through API communication
+- Component-based React architecture for feed rendering, auth flows, and interactions
+
+---
+
+## Personalization Logic
+
+Instead of machine learning, Sayings uses lightweight signal-based ranking:
+
+- Tracks user interactions (votes, categories, sources)
+- Weighs engagement patterns
+- Ranks and surfaces quotes aligned with user interests in real time
+
+This keeps the system efficient, explainable, and fast.
+
+---
+
+## What This Project Demonstrates
+
+- Database schema design for social systems
+- API design and permission systems
+- Authentication flows and secure backend architecture
+- Ranking and personalization logic
+- Full frontend–backend integration
+- Building a complete production-style web application
+
+---
+
+## Links
+
+- Live App: https://sayings-quotes.vercel.app/home  
+- Source Code: https://github.com/Abdelrhman1326/sayings  
+- Demo Video: https://www.youtube.com/watch?v=RVXSZ10LpJw
+
+---
+
+Sayings explores how simple interaction signals and thoughtful data modeling can create a meaningful social experience without relying on complex machine learning.
