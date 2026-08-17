@@ -1,9 +1,16 @@
 import axios from 'axios';
 
 // Centralized API configuration
-// To switch to a different host (e.g. localhost), edit VITE_API_BASE_URL in your .env file.
-// If VITE_API_BASE_URL is empty, it defaults to using the local proxy (/apis).
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// VITE_API_BASE_URL should be set per-environment (local/.env, Vercel dashboard, etc.).
+// If it's not set — e.g. a preview deploy where the env var was forgotten — we fall back
+// to the production backend instead of silently resolving to a same-origin relative path.
+const PROD_API_URL = 'https://abdelrhmanmo-sayings-api.hf.space';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || PROD_API_URL;
+
+if (!import.meta.env.VITE_API_BASE_URL) {
+    console.warn('[apiConfig] VITE_API_BASE_URL not set — falling back to', PROD_API_URL);
+}
+
 export const API_BASE = `${BASE_URL}/apis`;
 
 // JWT token storage
